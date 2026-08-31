@@ -1,110 +1,280 @@
 {% extends "base.html" %}
 
-{% block title %}Inicio — {{ app_name }}{% endblock %}
+{% block title %}Dashboard — {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Inicio</h1>
-    <p>Resumen de tu negocio</p>
-</div>
+<div class="dashboard-page">
 
-<div class="stat-cards">
-    <div class="stat-card inversion">
-        <div class="stat-icon"><i class="bi bi-piggy-bank"></i></div>
-        <div class="stat-label">Inversión</div>
-        <div class="stat-value">{{ formatear_moneda(resumen.inversion_inventario) }}</div>
-        <small class="text-muted">Costo del inventario actual</small>
-    </div>
-    <div class="stat-card ganancia">
-        <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
-        <div class="stat-label">Ganancia neta</div>
-        <div class="stat-value">{{ formatear_moneda(resumen.ganancia_neta) }}</div>
-        <small class="text-muted">Total acumulado</small>
-    </div>
-    <div class="stat-card stock-bajo">
-        <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
-        <div class="stat-label">Stocks bajos</div>
-        <div class="stat-value">{{ resumen.productos_stock_bajo }}</div>
-        <small class="text-muted">Productos con poco stock</small>
-    </div>
-</div>
-
-<div class="row g-3">
-    <div class="col-lg-6">
-        <div class="section-card">
-            <h2><i class="bi bi-receipt"></i> Ventas recientes</h2>
-            {% if ventas_recientes %}
-            <div class="desktop-table">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Producto</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for venta in ventas_recientes %}
-                            {% set detalle = venta.detalles[0] %}
-                            <tr>
-                                <td>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
-                                <td>{{ detalle.producto.nombre }} × {{ detalle.cantidad }}</td>
-                                <td>{{ formatear_moneda(venta.total) }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="mobile-card-list">
-                {% for venta in ventas_recientes %}
-                {% set detalle = venta.detalles[0] %}
-                <div class="mobile-data-card">
-                    <div class="row-item"><strong>Fecha</strong><span>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</span></div>
-                    <div class="row-item"><strong>Producto</strong><span>{{ detalle.producto.nombre }} × {{ detalle.cantidad }}</span></div>
-                    <div class="row-item"><strong>Total</strong><span>{{ formatear_moneda(venta.total) }}</span></div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-state">
-                <i class="bi bi-cart"></i>
-                <p>Aún no hay ventas registradas.</p>
-                <a href="{{ url_for('ventas.registrar') }}" class="btn btn-primary">Registrar primera venta</a>
-            </div>
-            {% endif %}
+    <div class="dashboard-header">
+        <div>
+            <span class="dashboard-eyebrow">CANELOON</span>
+            <h1>Dashboard</h1>
+            <p>Resumen de tu negocio</p>
         </div>
+
+        <a href="{{ url_for('ventas.registrar') }}" class="dashboard-sale-btn">
+            <i class="bi bi-plus-lg"></i>
+            Registrar venta
+        </a>
     </div>
 
-    <div class="col-lg-6">
-        <div class="section-card">
-            <h2><i class="bi bi-box-seam"></i> Productos disponibles</h2>
-            {% if productos_disponibles %}
-            <div class="product-grid">
-                {% for producto in productos_disponibles %}
-                <div class="product-item">
-                    <div class="product-name">{{ producto.nombre }}</div>
-                    <div class="product-meta">
-                        {{ formatear_moneda(producto.precio_venta) }} · Stock: {{ producto.stock }}
+
+    <!-- RESUMEN -->
+    <section class="dashboard-summary">
+        <div class="summary-card summary-investment">
+            <div class="summary-icon">
+                <i class="bi bi-piggy-bank"></i>
+            </div>
+
+            <div class="summary-content">
+                <span>Inversión</span>
+                <strong>{{ formatear_moneda(resumen.inversion_inventario) }}</strong>
+                <small>Valor del inventario actual</small>
+            </div>
+        </div>
+
+        <div class="summary-card summary-profit">
+            <div class="summary-icon">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+
+            <div class="summary-content">
+                <span>Ganancia neta</span>
+                <strong>{{ formatear_moneda(resumen.ganancia_neta) }}</strong>
+                <small>Total acumulado</small>
+            </div>
+        </div>
+
+        <div class="summary-card summary-stock">
+            <div class="summary-icon">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+
+            <div class="summary-content">
+                <span>Stocks bajos</span>
+                <strong>{{ resumen.productos_stock_bajo }}</strong>
+                <small>Productos que necesitan atención</small>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- BLOQUES PRINCIPALES -->
+    <section class="dashboard-grid">
+
+        <!-- VENTAS HOY -->
+        <article class="dashboard-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="panel-icon">
+                        <i class="bi bi-receipt"></i>
+                    </span>
+
+                    <div>
+                        <h2>Ventas hoy</h2>
+                        <p>{{ ventas_hoy|length }} venta{% if ventas_hoy|length != 1 %}s{% endif %}</p>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-state">
-                <i class="bi bi-box"></i>
-                <p>No hay productos con stock disponible.</p>
-                <a href="{{ url_for('productos.nuevo') }}" class="btn btn-primary">Agregar producto</a>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
 
-<div class="d-none d-lg-block mt-3">
-    <a href="{{ url_for('ventas.registrar') }}" class="btn btn-primary btn-lg">
-        <i class="bi bi-plus-lg"></i> Registrar venta
-    </a>
+                <a href="{{ url_for('ventas.index') }}" class="panel-link">
+                    Ver todas
+                </a>
+            </div>
+
+            <div class="panel-body scrollable-panel">
+                {% if ventas_hoy %}
+                    {% for venta in ventas_hoy %}
+                    <div class="sale-item">
+
+                        <div class="sale-item-main">
+                            <div class="sale-avatar">
+                                <i class="bi bi-receipt"></i>
+                            </div>
+
+                            <div>
+                                <strong>
+                                    {% if venta.cliente %}
+                                        {{ venta.cliente.nombre }}
+                                    {% else %}
+                                        Consumidor general
+                                    {% endif %}
+                                </strong>
+
+                                <span>
+                                    {{ venta.fecha.strftime('%H:%M') }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <strong class="sale-total">
+                            {{ formatear_moneda(venta.total) }}
+                        </strong>
+
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="dashboard-empty">
+                        <i class="bi bi-receipt"></i>
+                        <strong>No hay ventas hoy</strong>
+                        <span>Las ventas registradas hoy aparecerán aquí.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </article>
+
+
+        <!-- PRODUCTOS -->
+        <article class="dashboard-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="panel-icon">
+                        <i class="bi bi-box-seam"></i>
+                    </span>
+
+                    <div>
+                        <h2>Productos</h2>
+                        <p>{{ productos|length }} disponibles</p>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('productos.index') }}" class="panel-link">
+                    Ver todos
+                </a>
+            </div>
+
+            <div class="panel-body scrollable-panel">
+                {% if productos %}
+                    {% for producto in productos %}
+                    <div class="product-item-dashboard">
+
+                        <div>
+                            <strong>{{ producto.nombre }}</strong>
+
+                            <span>
+                                {{ formatear_moneda(producto.precio_venta) }}
+                            </span>
+                        </div>
+
+                        <div class="product-stock">
+                            <small>Stock</small>
+                            <strong>{{ producto.stock }}</strong>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="dashboard-empty">
+                        <i class="bi bi-box"></i>
+                        <strong>No hay productos disponibles</strong>
+                        <span>Agrega productos para comenzar a vender.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </article>
+
+
+        <!-- TOP PRODUCTOS -->
+        <article class="dashboard-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="panel-icon">
+                        <i class="bi bi-trophy"></i>
+                    </span>
+
+                    <div>
+                        <h2>Top productos</h2>
+                        <p>Más vendidos</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-body scrollable-panel">
+                {% if top_productos %}
+                    {% for nombre, cantidad, ingresos in top_productos %}
+                    <div class="ranking-item">
+
+                        <div class="ranking-position">
+                            {{ loop.index }}
+                        </div>
+
+                        <div class="ranking-info">
+                            <strong>{{ nombre }}</strong>
+
+                            <span>
+                                {{ cantidad }} unidad{% if cantidad != 1 %}es{% endif %}
+                            </span>
+                        </div>
+
+                        <strong class="ranking-value">
+                            {{ formatear_moneda(ingresos) }}
+                        </strong>
+
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="dashboard-empty">
+                        <i class="bi bi-trophy"></i>
+                        <strong>Aún no hay productos vendidos</strong>
+                        <span>El ranking aparecerá cuando registres ventas.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </article>
+
+
+        <!-- TOP CLIENTES -->
+        <article class="dashboard-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="panel-icon">
+                        <i class="bi bi-people"></i>
+                    </span>
+
+                    <div>
+                        <h2>Top clientes</h2>
+                        <p>Clientes con mayor gasto</p>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('clientes.index') }}" class="panel-link">
+                    Ver todos
+                </a>
+            </div>
+
+            <div class="panel-body scrollable-panel">
+                {% if top_clientes %}
+                    {% for nombre, compras, gastado in top_clientes %}
+                    <div class="ranking-item">
+
+                        <div class="ranking-position">
+                            {{ loop.index }}
+                        </div>
+
+                        <div class="ranking-info">
+                            <strong>{{ nombre }}</strong>
+
+                            <span>
+                                {{ compras }} compra{% if compras != 1 %}s{% endif %}
+                            </span>
+                        </div>
+
+                        <strong class="ranking-value">
+                            {{ formatear_moneda(gastado) }}
+                        </strong>
+
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="dashboard-empty">
+                        <i class="bi bi-people"></i>
+                        <strong>Aún no hay clientes con compras</strong>
+                        <span>El ranking aparecerá cuando registres ventas.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </article>
+
+    </section>
+
 </div>
 {% endblock %}
