@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Productos — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+    <div>
+        <h1>Productos</h1>
+        <p>Gestiona tu inventario de postres</p>
+    </div>
+    <a href="{{ url_for('productos.nuevo') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Nuevo producto
+    </a>
+</div>
+
+<div class="action-bar">
+    <form class="search-form" method="GET">
+        <div class="input-group">
+            <input type="text" class="form-control" name="q" value="{{ busqueda }}" placeholder="Buscar producto...">
+            <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+        </div>
+    </form>
+</div>
+
+{% if productos %}
+<div class="desktop-table">
+    <div class="section-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Precio venta</th>
+                        <th>Costo</th>
+                        <th>Stock</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in productos %}
+                    <tr>
+                        <td><strong>{{ producto.nombre }}</strong></td>
+                        <td>{{ formatear_moneda(producto.precio_venta) }}</td>
+                        <td>{{ formatear_moneda(producto.costo_unitario) }}</td>
+                        <td>
+                            {% if producto.stock <= 5 %}
+                            <span class="badge badge-stock-bajo">{{ producto.stock }}</span>
+                            {% else %}
+                            <span class="badge badge-stock-ok">{{ producto.stock }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('productos.editar', id_producto=producto.id_producto) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('productos.eliminar', id_producto=producto.id_producto) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este producto?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mobile-card-list">
+    {% for producto in productos %}
+    <div class="mobile-data-card">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <strong>{{ producto.nombre }}</strong>
+            {% if producto.stock <= 5 %}
+            <span class="badge badge-stock-bajo">Stock: {{ producto.stock }}</span>
+            {% else %}
+            <span class="badge badge-stock-ok">Stock: {{ producto.stock }}</span>
+            {% endif %}
+        </div>
+        <div class="row-item"><strong>Precio</strong><span>{{ formatear_moneda(producto.precio_venta) }}</span></div>
+        <div class="row-item"><strong>Costo</strong><span>{{ formatear_moneda(producto.costo_unitario) }}</span></div>
+        <div class="d-flex gap-2 mt-2">
+            <a href="{{ url_for('productos.editar', id_producto=producto.id_producto) }}" class="btn btn-sm btn-outline-primary flex-fill">Editar</a>
+            <form method="POST" action="{{ url_for('productos.eliminar', id_producto=producto.id_producto) }}" class="flex-fill" onsubmit="return confirm('¿Eliminar?')">
+                <button type="submit" class="btn btn-sm btn-outline-danger w-100">Eliminar</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="section-card">
+    <div class="empty-state">
+        <i class="bi bi-box-seam"></i>
+        <p>{% if busqueda %}No se encontraron productos.{% else %}Aún no tienes productos registrados.{% endif %}</p>
+        <a href="{{ url_for('productos.nuevo') }}" class="btn btn-primary">Agregar producto</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

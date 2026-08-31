@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Inversión — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Inversión</h1>
+    <p>Costo de tu inventario y rentabilidad</p>
+</div>
+
+<div class="stat-cards">
+    <div class="stat-card inversion">
+        <div class="stat-label">Inversión total</div>
+        <div class="stat-value">{{ formatear_moneda(resumen.inversion_inventario) }}</div>
+        <small class="text-muted">Suma de costo × stock</small>
+    </div>
+    <div class="stat-card ganancia">
+        <div class="stat-label">Ganancia neta</div>
+        <div class="stat-value">{{ formatear_moneda(resumen.ganancia_neta) }}</div>
+        <small class="text-muted">De todas las ventas</small>
+    </div>
+    <div class="stat-card stock-bajo">
+        <div class="stat-label">% Ganancia neta</div>
+        <div class="stat-value">{{ "%.1f"|format(resumen.porcentaje_ganancia) }}%</div>
+        <small class="text-muted">Ganancia ÷ Ventas totales × 100</small>
+    </div>
+</div>
+
+<div class="section-card mb-3">
+    <h2><i class="bi bi-calculator"></i> ¿Cómo se calcula?</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="p-3 rounded" style="background: #fafafa;">
+                <strong>Inversión por producto</strong>
+                <p class="mb-0 text-muted small mt-1">Costo unitario × Cantidad en stock</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-3 rounded" style="background: #fafafa;">
+                <strong>Ganancia por venta</strong>
+                <p class="mb-0 text-muted small mt-1">(Precio venta − Costo) × Cantidad</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-3 rounded" style="background: #fafafa;">
+                <strong>% Ganancia neta</strong>
+                <p class="mb-0 text-muted small mt-1">(Ganancia neta ÷ Ventas totales) × 100</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section-card">
+    <h2><i class="bi bi-box-seam"></i> Inversión por producto</h2>
+    {% if productos_inversion %}
+    <div class="desktop-table">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Stock</th>
+                        <th>Costo unit.</th>
+                        <th>Inversión</th>
+                        <th>Margen unit.</th>
+                        <th>Valor venta pot.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in productos_inversion %}
+                    <tr>
+                        <td><strong>{{ p.nombre }}</strong></td>
+                        <td>{{ p.stock }}</td>
+                        <td>{{ formatear_moneda(p.costo_unitario) }}</td>
+                        <td>{{ formatear_moneda(p.inversion) }}</td>
+                        <td>{{ formatear_moneda(p.margen_unitario) }}</td>
+                        <td>{{ formatear_moneda(p.valor_venta_potencial) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="mobile-card-list">
+        {% for p in productos_inversion %}
+        <div class="mobile-data-card">
+            <strong class="d-block mb-2">{{ p.nombre }}</strong>
+            <div class="row-item"><strong>Stock</strong><span>{{ p.stock }}</span></div>
+            <div class="row-item"><strong>Costo unit.</strong><span>{{ formatear_moneda(p.costo_unitario) }}</span></div>
+            <div class="row-item"><strong>Inversión</strong><span>{{ formatear_moneda(p.inversion) }}</span></div>
+            <div class="row-item"><strong>Margen unit.</strong><span>{{ formatear_moneda(p.margen_unitario) }}</span></div>
+            <div class="row-item"><strong>Valor venta pot.</strong><span>{{ formatear_moneda(p.valor_venta_potencial) }}</span></div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-piggy-bank"></i>
+        <p>Agrega productos para ver la inversión.</p>
+        <a href="{{ url_for('productos.nuevo') }}" class="btn btn-primary">Agregar producto</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

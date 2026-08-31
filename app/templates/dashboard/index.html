@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Inicio</h1>
+    <p>Resumen de tu negocio</p>
+</div>
+
+<div class="stat-cards">
+    <div class="stat-card inversion">
+        <div class="stat-icon"><i class="bi bi-piggy-bank"></i></div>
+        <div class="stat-label">Inversión</div>
+        <div class="stat-value">{{ formatear_moneda(resumen.inversion_inventario) }}</div>
+        <small class="text-muted">Costo del inventario actual</small>
+    </div>
+    <div class="stat-card ganancia">
+        <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+        <div class="stat-label">Ganancia neta</div>
+        <div class="stat-value">{{ formatear_moneda(resumen.ganancia_neta) }}</div>
+        <small class="text-muted">Total acumulado</small>
+    </div>
+    <div class="stat-card stock-bajo">
+        <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+        <div class="stat-label">Stocks bajos</div>
+        <div class="stat-value">{{ resumen.productos_stock_bajo }}</div>
+        <small class="text-muted">Productos con poco stock</small>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="section-card">
+            <h2><i class="bi bi-receipt"></i> Ventas recientes</h2>
+            {% if ventas_recientes %}
+            <div class="desktop-table">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Producto</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for venta in ventas_recientes %}
+                            {% set detalle = venta.detalles[0] %}
+                            <tr>
+                                <td>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>{{ detalle.producto.nombre }} × {{ detalle.cantidad }}</td>
+                                <td>{{ formatear_moneda(venta.total) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="mobile-card-list">
+                {% for venta in ventas_recientes %}
+                {% set detalle = venta.detalles[0] %}
+                <div class="mobile-data-card">
+                    <div class="row-item"><strong>Fecha</strong><span>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</span></div>
+                    <div class="row-item"><strong>Producto</strong><span>{{ detalle.producto.nombre }} × {{ detalle.cantidad }}</span></div>
+                    <div class="row-item"><strong>Total</strong><span>{{ formatear_moneda(venta.total) }}</span></div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-cart"></i>
+                <p>Aún no hay ventas registradas.</p>
+                <a href="{{ url_for('ventas.registrar') }}" class="btn btn-primary">Registrar primera venta</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="section-card">
+            <h2><i class="bi bi-box-seam"></i> Productos disponibles</h2>
+            {% if productos_disponibles %}
+            <div class="product-grid">
+                {% for producto in productos_disponibles %}
+                <div class="product-item">
+                    <div class="product-name">{{ producto.nombre }}</div>
+                    <div class="product-meta">
+                        {{ formatear_moneda(producto.precio_venta) }} · Stock: {{ producto.stock }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-box"></i>
+                <p>No hay productos con stock disponible.</p>
+                <a href="{{ url_for('productos.nuevo') }}" class="btn btn-primary">Agregar producto</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="d-none d-lg-block mt-3">
+    <a href="{{ url_for('ventas.registrar') }}" class="btn btn-primary btn-lg">
+        <i class="bi bi-plus-lg"></i> Registrar venta
+    </a>
+</div>
+{% endblock %}

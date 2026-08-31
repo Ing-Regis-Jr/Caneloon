@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Ventas — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+    <div>
+        <h1>Ventas</h1>
+        <p>Estadísticas e historial de ventas</p>
+    </div>
+    <a href="{{ url_for('ventas.registrar') }}" class="btn btn-primary btn-lg d-none d-lg-inline-flex">
+        <i class="bi bi-plus-lg"></i> Registrar venta
+    </a>
+</div>
+
+<div class="stat-cards">
+    <div class="stat-card ganancia">
+        <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+        <div class="stat-label">Ganancia neta</div>
+        <div class="stat-value">{{ formatear_moneda(resumen.ganancia_neta) }}</div>
+    </div>
+    <div class="stat-card inversion">
+        <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+        <div class="stat-label">Ventas totales</div>
+        <div class="stat-value">{{ formatear_moneda(resumen.ventas_totales) }}</div>
+    </div>
+    <div class="stat-card margen">
+        <div class="stat-icon"><i class="bi bi-percent"></i></div>
+        <div class="stat-label">Margen</div>
+        <div class="stat-value">{{ "%.1f"|format(resumen.porcentaje_ganancia) }}%</div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="section-card h-100">
+            <h2><i class="bi bi-trophy"></i> Productos más vendidos</h2>
+            {% if productos_top %}
+            <ul class="rank-list">
+                {% for nombre, cantidad, ingresos in productos_top %}
+                <li>
+                    <div>
+                        <div class="rank-name">{{ nombre }}</div>
+                        <div class="rank-meta">{{ cantidad }} unidades vendidas</div>
+                    </div>
+                    <strong class="rank-amount">{{ formatear_moneda(ingresos) }}</strong>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted mb-0">Sin datos aún.</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="section-card h-100">
+            <h2><i class="bi bi-people"></i> Clientes top</h2>
+            {% if clientes_top %}
+            <ul class="rank-list">
+                {% for nombre, compras, total in clientes_top %}
+                <li>
+                    <div>
+                        <div class="rank-name">{{ nombre }}</div>
+                        <div class="rank-meta">{{ compras }} compra(s)</div>
+                    </div>
+                    <strong class="rank-amount">{{ formatear_moneda(total) }}</strong>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted mb-0">Sin clientes con compras aún.</p>
+            {% endif %}
+            <div class="mt-3">
+                <a href="{{ url_for('clientes.index') }}" class="btn btn-sm btn-outline-primary">Gestionar clientes</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section-card">
+    <h2><i class="bi bi-clock-history"></i> Historial de ventas</h2>
+    {% if historial %}
+    <div class="desktop-table">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for venta in historial %}
+                    {% set detalle = venta.detalles[0] %}
+                    <tr>
+                        <td><span class="fecha-badge">{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</span></td>
+                        <td>
+                            {% if venta.cliente %}
+                            <span class="cliente-tag">{{ venta.cliente.nombre }}</span>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ detalle.producto.nombre }}</strong></td>
+                        <td><span class="cantidad-badge">{{ detalle.cantidad }}</span></td>
+                        <td><strong class="total-venta">{{ formatear_moneda(venta.total) }}</strong></td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{{ url_for('ventas.editar', id_venta=venta.id_venta) }}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('ventas.eliminar', id_venta=venta.id_venta) }}" class="d-inline" onsubmit="return confirm('¿Eliminar esta venta? El stock se restaurará.')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="mobile-card-list">
+        {% for venta in historial %}
+        {% set detalle = venta.detalles[0] %}
+        <div class="mobile-data-card venta-card">
+            <div class="venta-card-header">
+                <span class="fecha-badge">{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</span>
+                <strong class="total-venta">{{ formatear_moneda(venta.total) }}</strong>
+            </div>
+            <div class="row-item"><strong>Cliente</strong><span>{{ venta.cliente.nombre if venta.cliente else '—' }}</span></div>
+            <div class="row-item"><strong>Producto</strong><span>{{ detalle.producto.nombre }}</span></div>
+            <div class="row-item"><strong>Cantidad</strong><span>{{ detalle.cantidad }}</span></div>
+            <div class="d-flex gap-2 mt-3">
+                <a href="{{ url_for('ventas.editar', id_venta=venta.id_venta) }}" class="btn btn-sm btn-outline-primary flex-fill">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+                <form method="POST" action="{{ url_for('ventas.eliminar', id_venta=venta.id_venta) }}" class="flex-fill" onsubmit="return confirm('¿Eliminar esta venta?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-receipt"></i>
+        <p>No hay ventas registradas.</p>
+        <a href="{{ url_for('ventas.registrar') }}" class="btn btn-primary">Registrar primera venta</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

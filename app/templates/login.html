@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar sesión — {{ app_name }}{% endblock %}
+
+{% block auth_content %}
+<div class="login-page">
+    <div class="login-card">
+        <div class="login-brand">
+            <span class="login-icon">🍋</span>
+            <h1>{{ app_name }}</h1>
+            <p class="text-muted">Sistema de gestión de postres</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            <div class="mb-3">
+                <label for="username" class="form-label">Usuario</label>
+                <input type="text" class="form-control form-control-lg" id="username" name="username" required autofocus>
+            </div>
+            <div class="mb-4">
+                <label for="password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control form-control-lg" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100">Entrar</button>
+        </form>
+
+        <p class="login-hint text-muted mt-4">
+            Usuario inicial: <strong>admin</strong> / Contraseña: <strong>admin123</strong>
+        </p>
+    </div>
+</div>
+{% endblock %}

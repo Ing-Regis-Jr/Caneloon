@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Registrar venta — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Registrar venta</h1>
+    <p>Rápido y sencillo — un producto por venta</p>
+</div>
+
+<div class="section-card form-card">
+    {% if productos %}
+    <form method="POST" id="form-venta">
+        <div class="mb-3">
+            <label for="nombre_cliente" class="form-label">Cliente <span class="text-muted">(opcional)</span></label>
+            <input type="text" class="form-control form-control-lg" id="nombre_cliente" name="nombre_cliente"
+                   list="clientes-existentes" placeholder="Escribe el nombre del cliente" autocomplete="off">
+            <datalist id="clientes-existentes">
+                {% for cliente in clientes %}
+                <option value="{{ cliente.nombre }}"></option>
+                {% endfor %}
+            </datalist>
+            <small class="text-muted">Deja vacío si no aplica. Si el cliente es nuevo, se guardará automáticamente.</small>
+        </div>
+        <div class="mb-3">
+            <label for="id_producto" class="form-label">Producto</label>
+            <select class="form-select form-select-lg" id="id_producto" name="id_producto" required>
+                <option value="">Selecciona un producto</option>
+                {% for producto in productos %}
+                <option value="{{ producto.id_producto }}"
+                        data-precio="{{ producto.precio_venta }}"
+                        data-stock="{{ producto.stock }}">
+                    {{ producto.nombre }} — {{ formatear_moneda(producto.precio_venta) }} (Stock: {{ producto.stock }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="cantidad" class="form-label">Cantidad</label>
+            <input type="number" class="form-control form-control-lg" id="cantidad" name="cantidad"
+                   min="1" value="1" required>
+        </div>
+        <div class="preview-box mb-4" id="preview-box">
+            <div class="d-flex justify-content-between">
+                <span>Total estimado:</span>
+                <strong id="preview-total">Bs. 0.00</strong>
+            </div>
+            <small class="text-muted" id="preview-stock"></small>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg w-100">
+            <i class="bi bi-check-lg"></i> Registrar venta
+        </button>
+    </form>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-exclamation-circle"></i>
+        <p>No hay productos con stock disponible.</p>
+        <a href="{{ url_for('productos.nuevo') }}" class="btn btn-primary">Agregar producto</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const selectProducto = document.getElementById('id_producto');
+    const inputCantidad = document.getElementById('cantidad');
+    const previewBox = document.getElementById('preview-box');
+    const previewTotal = document.getElementById('preview-total');
+    const previewStock = document.getElementById('preview-stock');
+
+    function actualizarPreview() {
+        const option = selectProducto.options[selectProducto.selectedIndex];
+        if (!option || !option.value) {
+            previewBox.style.display = 'none';
+            return;
+        }
+        const precio = parseFloat(option.dataset.precio);
+        const stock = parseInt(option.dataset.stock);
+        const cantidad = parseInt(inputCantidad.value) || 0;
+        previewBox.style.display = 'block';
+        previewTotal.textContent = 'Bs. ' + (precio * cantidad).toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        previewStock.textContent = 'Stock restante: ' + Math.max(0, stock - cantidad);
+    }
+
+    if (selectProducto) {
+        selectProducto.addEventListener('change', actualizarPreview);
+        inputCantidad.addEventListener('input', actualizarPreview);
+        actualizarPreview();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ titulo }}</h1>
+    <p>Completa la información del producto</p>
+</div>
+
+<div class="section-card" style="max-width: 560px;">
+    <form method="POST">
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre</label>
+            <input type="text" class="form-control form-control-lg" id="nombre" name="nombre"
+                   value="{{ producto.nombre if producto else '' }}" required>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="precio_venta" class="form-label">Precio de venta (Bs.)</label>
+                <input type="number" step="0.01" min="0" class="form-control" id="precio_venta" name="precio_venta"
+                       value="{{ producto.precio_venta if producto else '' }}" required>
+            </div>
+            <div class="col-md-6">
+                <label for="costo_unitario" class="form-label">Costo unitario (Bs.)</label>
+                <input type="number" step="0.01" min="0" class="form-control" id="costo_unitario" name="costo_unitario"
+                       value="{{ producto.costo_unitario if producto else '' }}" required>
+            </div>
+        </div>
+        <div class="mb-4 mt-3">
+            <label for="stock" class="form-label">Stock (cantidad)</label>
+            <input type="number" min="0" class="form-control" id="stock" name="stock"
+                   value="{{ producto.stock if producto else '0' }}" required>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">Guardar</button>
+            <a href="{{ url_for('productos.index') }}" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
