@@ -13,33 +13,75 @@
     {% if usuario_actual and usuario_actual.is_authenticated %}
     <div class="app-layout">
         <aside class="sidebar d-none d-lg-flex">
-            <div class="sidebar-brand">
-                <span class="brand-icon">🍋</span>
-                <span class="brand-text">{{ app_name }}</span>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="{{ url_for('dashboard.index') }}" class="nav-link-app {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
-                    <i class="bi bi-house-door"></i> Inicio
-                </a>
-                <a href="{{ url_for('productos.index') }}" class="nav-link-app {% if request.blueprint == 'productos' %}active{% endif %}">
-                    <i class="bi bi-box-seam"></i> Productos
-                </a>
-                <a href="{{ url_for('ventas.index') }}" class="nav-link-app {% if request.blueprint == 'ventas' %}active{% endif %}">
-                    <i class="bi bi-cart-check"></i> Ventas
-                </a>
-                <a href="{{ url_for('inversion.index') }}" class="nav-link-app {% if request.blueprint == 'inversion' %}active{% endif %}">
-                    <i class="bi bi-piggy-bank"></i> Inversión
-                </a>
-            </nav>
-            <div class="sidebar-footer">
-                <a href="{{ url_for('clientes.index') }}" class="nav-link-app small-link {% if request.blueprint == 'clientes' %}active{% endif %}">
-                    <i class="bi bi-people"></i> Clientes
-                </a>
-                <a href="{{ url_for('auth.logout') }}" class="nav-link-app small-link text-danger">
-                    <i class="bi bi-box-arrow-right"></i> Salir
-                </a>
-            </div>
-        </aside>
+    <div class="sidebar-brand">
+        <img
+            src="{{ url_for('static', filename='img/logo.png') }}"
+            alt="Logo de Caneloon"
+            class="brand-logo"
+        >
+        <div class="brand-name">
+            <span class="brand-title">CANELOON</span>
+            <span class="brand-subtitle">Gestión del negocio</span>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+
+        <div class="sidebar-section">
+            <span class="sidebar-section-title">PRINCIPAL</span>
+
+            <a href="{{ url_for('dashboard.index') }}"
+               class="nav-link-app {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Dashboard</span>
+            </a>
+        </div>
+
+        <div class="sidebar-section">
+            <span class="sidebar-section-title">GESTIÓN</span>
+
+            <a href="{{ url_for('ventas.registrar') }}"
+               class="nav-link-app {% if request.endpoint == 'ventas.registrar' %}active{% endif %}">
+                <i class="bi bi-cart-plus"></i>
+                <span>Registrar venta</span>
+            </a>
+
+            <a href="{{ url_for('clientes.index') }}"
+               class="nav-link-app {% if request.blueprint == 'clientes' %}active{% endif %}">
+                <i class="bi bi-people"></i>
+                <span>Clientes</span>
+            </a>
+
+            <a href="{{ url_for('productos.index') }}"
+               class="nav-link-app {% if request.blueprint == 'productos' %}active{% endif %}">
+                <i class="bi bi-box-seam"></i>
+                <span>Productos</span>
+            </a>
+
+            <a href="{{ url_for('inversion.index') }}"
+               class="nav-link-app {% if request.blueprint == 'inversion' %}active{% endif %}">
+                <i class="bi bi-wallet2"></i>
+                <span>Economía</span>
+            </a>
+        </div>
+
+        <div class="sidebar-section sidebar-system">
+            <span class="sidebar-section-title">SISTEMA</span>
+
+            <a href="{{ url_for('auth.logout') }}"
+               class="nav-link-app logout-link">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Cerrar sesión</span>
+            </a>
+        </div>
+
+    </nav>
+
+    <div class="sidebar-footer">
+        <span class="developed-label">Developed by</span>
+        <span class="developer-name">Regis Salvador</span>
+    </div>
+</aside>
 
         <main class="main-content">
             <header class="mobile-header d-lg-none">
