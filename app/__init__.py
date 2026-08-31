@@ -30,7 +30,7 @@ def create_app(config_class: type = Config) -> Flask:
     @app.context_processor
     def inject_globals():
         return {
-            "app_name": "DULCE LIMON",
+            "app_name": "CANELOON",  
             "usuario_actual": current_user if current_user.is_authenticated else None,
         }
 
