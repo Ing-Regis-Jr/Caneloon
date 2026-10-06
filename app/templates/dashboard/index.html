@@ -7,8 +7,7 @@
 
     <div class="dashboard-header">
         <div>
-            <span class="dashboard-eyebrow">CANELOON</span>
-            <h1>Dashboard</h1>
+            <h1>INICIO</h1>
             <p>Resumen de tu negocio</p>
         </div>
 
@@ -71,53 +70,53 @@
                     </span>
 
                     <div>
-                        <h2>Ventas hoy</h2>
+                        <h2>VENTAS HOY</h2>
                         <p>{{ ventas_hoy|length }} venta{% if ventas_hoy|length != 1 %}s{% endif %}</p>
                     </div>
                 </div>
 
                 <a href="{{ url_for('ventas.index') }}" class="panel-link">
-                    Ver todas
+                    Ver historial completo
                 </a>
             </div>
 
             <div class="panel-body scrollable-panel">
                 {% if ventas_hoy %}
-                    {% for venta in ventas_hoy %}
-                    <div class="sale-item">
+                {% for venta in ventas_hoy %}
+                <div class="sale-item">
 
-                        <div class="sale-item-main">
-                            <div class="sale-avatar">
-                                <i class="bi bi-receipt"></i>
-                            </div>
-
-                            <div>
-                                <strong>
-                                    {% if venta.cliente %}
-                                        {{ venta.cliente.nombre }}
-                                    {% else %}
-                                        Consumidor general
-                                    {% endif %}
-                                </strong>
-
-                                <span>
-                                    {{ venta.fecha.strftime('%H:%M') }}
-                                </span>
-                            </div>
+                    <div class="sale-item-main">
+                        <div class="sale-avatar">
+                            <i class="bi bi-receipt"></i>
                         </div>
 
-                        <strong class="sale-total">
-                            {{ formatear_moneda(venta.total) }}
-                        </strong>
+                        <div>
+                            <strong>
+                                {% if venta.cliente %}
+                                {{ venta.cliente.nombre }}
+                                {% else %}
+                                Consumidor general
+                                {% endif %}
+                            </strong>
 
+                            <span>
+                                {{ venta.fecha.strftime('%H:%M') }}
+                            </span>
+                        </div>
                     </div>
-                    {% endfor %}
+
+                    <strong class="sale-total">
+                        {{ formatear_moneda(venta.total) }}
+                    </strong>
+
+                </div>
+                {% endfor %}
                 {% else %}
-                    <div class="dashboard-empty">
-                        <i class="bi bi-receipt"></i>
-                        <strong>No hay ventas hoy</strong>
-                        <span>Las ventas registradas hoy aparecerán aquí.</span>
-                    </div>
+                <div class="dashboard-empty">
+                    <i class="bi bi-receipt"></i>
+                    <strong>No hay ventas hoy</strong>
+                    <span>Las ventas registradas hoy aparecerán aquí.</span>
+                </div>
                 {% endif %}
             </div>
         </article>
@@ -132,42 +131,42 @@
                     </span>
 
                     <div>
-                        <h2>Productos</h2>
+                        <h2>PRODUCTOS</h2>
                         <p>{{ productos|length }} disponibles</p>
                     </div>
                 </div>
 
                 <a href="{{ url_for('productos.index') }}" class="panel-link">
-                    Ver todos
+                    Ver productos
                 </a>
             </div>
 
             <div class="panel-body scrollable-panel">
                 {% if productos %}
-                    {% for producto in productos %}
-                    <div class="product-item-dashboard">
+                {% for producto in productos %}
+                <div class="product-item-dashboard">
 
-                        <div>
-                            <strong>{{ producto.nombre }}</strong>
+                    <div>
+                        <strong>{{ producto.nombre }}</strong>
 
-                            <span>
-                                {{ formatear_moneda(producto.precio_venta) }}
-                            </span>
-                        </div>
-
-                        <div class="product-stock">
-                            <small>Stock</small>
-                            <strong>{{ producto.stock }}</strong>
-                        </div>
-
+                        <span>
+                            {{ formatear_moneda(producto.precio_venta) }}
+                        </span>
                     </div>
-                    {% endfor %}
+
+                    <div class="product-stock">
+                        <small>Stock</small>
+                        <strong>{{ producto.stock }}</strong>
+                    </div>
+
+                </div>
+                {% endfor %}
                 {% else %}
-                    <div class="dashboard-empty">
-                        <i class="bi bi-box"></i>
-                        <strong>No hay productos disponibles</strong>
-                        <span>Agrega productos para comenzar a vender.</span>
-                    </div>
+                <div class="dashboard-empty">
+                    <i class="bi bi-box"></i>
+                    <strong>No hay productos disponibles</strong>
+                    <span>Agrega productos para comenzar a vender.</span>
+                </div>
                 {% endif %}
             </div>
         </article>
@@ -182,41 +181,42 @@
                     </span>
 
                     <div>
-                        <h2>Top productos</h2>
+                        <h2>TOP PRODUCTOS</h2>
                         <p>Más vendidos</p>
                     </div>
+
                 </div>
             </div>
 
             <div class="panel-body scrollable-panel">
                 {% if top_productos %}
-                    {% for nombre, cantidad, ingresos in top_productos %}
-                    <div class="ranking-item">
+                {% for nombre, cantidad, ingresos in top_productos %}
+                <div class="ranking-item">
 
-                        <div class="ranking-position">
-                            {{ loop.index }}
-                        </div>
-
-                        <div class="ranking-info">
-                            <strong>{{ nombre }}</strong>
-
-                            <span>
-                                {{ cantidad }} unidad{% if cantidad != 1 %}es{% endif %}
-                            </span>
-                        </div>
-
-                        <strong class="ranking-value">
-                            {{ formatear_moneda(ingresos) }}
-                        </strong>
-
+                    <div class="ranking-position">
+                        {{ loop.index }}
                     </div>
-                    {% endfor %}
+
+                    <div class="ranking-info">
+                        <strong>{{ nombre }}</strong>
+
+                        <span>
+                            {{ cantidad }} unidad{% if cantidad != 1 %}es{% endif %}
+                        </span>
+                    </div>
+
+                    <strong class="ranking-value">
+                        {{ formatear_moneda(ingresos) }}
+                    </strong>
+
+                </div>
+                {% endfor %}
                 {% else %}
-                    <div class="dashboard-empty">
-                        <i class="bi bi-trophy"></i>
-                        <strong>Aún no hay productos vendidos</strong>
-                        <span>El ranking aparecerá cuando registres ventas.</span>
-                    </div>
+                <div class="dashboard-empty">
+                    <i class="bi bi-trophy"></i>
+                    <strong>Aún no hay productos vendidos</strong>
+                    <span>El ranking aparecerá cuando registres ventas.</span>
+                </div>
                 {% endif %}
             </div>
         </article>
@@ -231,45 +231,45 @@
                     </span>
 
                     <div>
-                        <h2>Top clientes</h2>
+                        <h2>TOP CLIENTES</h2>
                         <p>Clientes con mayor gasto</p>
                     </div>
                 </div>
 
                 <a href="{{ url_for('clientes.index') }}" class="panel-link">
-                    Ver todos
+                    Ver clientes
                 </a>
             </div>
 
             <div class="panel-body scrollable-panel">
                 {% if top_clientes %}
-                    {% for nombre, compras, gastado in top_clientes %}
-                    <div class="ranking-item">
+                {% for nombre, compras, gastado in top_clientes %}
+                <div class="ranking-item">
 
-                        <div class="ranking-position">
-                            {{ loop.index }}
-                        </div>
-
-                        <div class="ranking-info">
-                            <strong>{{ nombre }}</strong>
-
-                            <span>
-                                {{ compras }} compra{% if compras != 1 %}s{% endif %}
-                            </span>
-                        </div>
-
-                        <strong class="ranking-value">
-                            {{ formatear_moneda(gastado) }}
-                        </strong>
-
+                    <div class="ranking-position">
+                        {{ loop.index }}
                     </div>
-                    {% endfor %}
+
+                    <div class="ranking-info">
+                        <strong>{{ nombre }}</strong>
+
+                        <span>
+                            {{ compras }} compra{% if compras != 1 %}s{% endif %}
+                        </span>
+                    </div>
+
+                    <strong class="ranking-value">
+                        {{ formatear_moneda(gastado) }}
+                    </strong>
+
+                </div>
+                {% endfor %}
                 {% else %}
-                    <div class="dashboard-empty">
-                        <i class="bi bi-people"></i>
-                        <strong>Aún no hay clientes con compras</strong>
-                        <span>El ranking aparecerá cuando registres ventas.</span>
-                    </div>
+                <div class="dashboard-empty">
+                    <i class="bi bi-people"></i>
+                    <strong>Aún no hay clientes con compras</strong>
+                    <span>El ranking aparecerá cuando registres ventas.</span>
+                </div>
                 {% endif %}
             </div>
         </article>

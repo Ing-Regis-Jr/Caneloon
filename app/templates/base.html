@@ -31,7 +31,7 @@
                     <a href="{{ url_for('dashboard.index') }}"
                         class="nav-link-app {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
                         <i class="bi bi-grid-1x2"></i>
-                        <span>Dashboard</span>
+                        <span>INICIO</span>
                     </a>
                 </div>
 
@@ -41,31 +41,31 @@
                     <a href="{{ url_for('ventas.registrar') }}"
                         class="nav-link-app {% if request.endpoint == 'ventas.registrar' %}active{% endif %}">
                         <i class="bi bi-cart-plus"></i>
-                        <span>Registrar venta</span>
+                        <span>REGISTRAR VENTAS</span>
                     </a>
 
                     <a href="{{ url_for('ventas.index') }}"
                         class="nav-link-app {% if request.blueprint == 'ventas' and request.endpoint != 'ventas.registrar' %}active{% endif %}">
                         <i class="bi bi-receipt"></i>
-                        <span>Ventas</span>
+                        <span>HISTORIAL</span>
 
                     </a>
                     <a href="{{ url_for('clientes.index') }}"
                         class="nav-link-app {% if request.blueprint == 'clientes' %}active{% endif %}">
                         <i class="bi bi-people"></i>
-                        <span>Clientes</span>
+                        <span>CLIENTES</span>
                     </a>
 
                     <a href="{{ url_for('productos.index') }}"
                         class="nav-link-app {% if request.blueprint == 'productos' %}active{% endif %}">
                         <i class="bi bi-box-seam"></i>
-                        <span>Productos</span>
+                        <span>PRODUCTOS</span>
                     </a>
 
                     <a href="{{ url_for('inversion.index') }}"
                         class="nav-link-app {% if request.blueprint == 'inversion' %}active{% endif %}">
                         <i class="bi bi-wallet2"></i>
-                        <span>Economía</span>
+                        <span>ECONOMIA</span>
                     </a>
                 </div>
 
@@ -82,7 +82,7 @@
 
             <div class="sidebar-footer">
                 <span class="developed-label">Developed by</span>
-                <span class="developer-name">Regis Salvador</span>
+                <span class="developer-name">Regis Ignacio Salvador</span>
             </div>
         </aside>
 
@@ -124,27 +124,27 @@
             <a href="{{ url_for('dashboard.index') }}"
                 class="bottom-nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
                 <i class="bi bi-grid-1x2"></i>
-                <span>Dashboard</span>
+                <span>INICIO</span>
             </a>
             <a href="{{ url_for('productos.index') }}"
                 class="bottom-nav-item {% if request.blueprint == 'productos' %}active{% endif %}">
                 <i class="bi bi-box-seam"></i>
-                <span>Productos</span>
+                <span>PRODUCTOS</span>
             </a>
             <a href="{{ url_for('ventas.registrar') }}"
                 class="bottom-nav-item bottom-nav-fab {% if request.endpoint == 'ventas.registrar' %}active{% endif %}">
                 <i class="bi bi-plus-lg"></i>
-                <span>Vender</span>
+                <span>REGISTRAR VENTAS</span>
             </a>
             <a href="{{ url_for('ventas.index') }}"
                 class="bottom-nav-item {% if request.blueprint == 'ventas' and request.endpoint != 'ventas.registrar' %}active{% endif %}">
                 <i class="bi bi-receipt"></i>
-                <span>Ventas</span>
+                <span>HISTORIAL</span>
             </a>
             <a href="{{ url_for('inversion.index') }}"
                 class="bottom-nav-item {% if request.blueprint == 'inversion' %}active{% endif %}">
                 <i class="bi bi-wallet2"></i>
-                <span>Economía</span>
+                <span>ECONOMIA</span>
             </a>
         </nav>
     </div>

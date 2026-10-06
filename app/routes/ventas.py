@@ -3,9 +3,11 @@ from flask_login import login_required
 
 from app.extensions import db
 from app.models import Cliente, Producto, Venta
-from app.services import StatsService, VentaService
+from app.services import VentaService
 from app.utils import formatear_moneda
+from datetime import date, datetime, time, timedelta
 
+from sqlalchemy import func
 ventas_bp = Blueprint("ventas", __name__, url_prefix="/ventas")
 
 
@@ -44,20 +46,61 @@ def _resolver_id_cliente() -> int | None:
     return None
 
 
+def _parse_fecha(valor: str | None) -> date | None:
+    try:
+        return datetime.strptime(valor, "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return None
+
+
 @ventas_bp.route("/")
 @login_required
 def index():
-    resumen = StatsService.resumen_general()
-    productos_top = StatsService.productos_mas_vendidos()
-    clientes_top = StatsService.clientes_top()
-    historial = Venta.query.order_by(Venta.fecha.desc()).limit(20).all()
+    desde = _parse_fecha(request.args.get("desde"))
+    hasta = _parse_fecha(request.args.get("hasta"))
+    if desde and hasta and desde > hasta:
+        desde, hasta = hasta, desde
+
+    query = Venta.query
+    if desde:
+        query = query.filter(Venta.fecha >= datetime.combine(desde, time.min))
+    if hasta:
+        query = query.filter(Venta.fecha <= datetime.combine(hasta, time.max))
+
+    cantidad = query.count()
+    total_periodo = query.with_entities(
+        func.coalesce(func.sum(Venta.total), 0.0)
+    ).scalar()
+    historial = query.order_by(Venta.fecha.desc()).limit(200).all()
+
+    desde_str = desde.isoformat() if desde else ""
+    hasta_str = hasta.isoformat() if hasta else ""
+
+    hoy = date.today()
+    ayer = hoy - timedelta(days=1)
+    atajos = [
+        {
+            "nombre": nombre,
+            "desde": d.isoformat(),
+            "hasta": h.isoformat(),
+            "activo": d.isoformat() == desde_str and h.isoformat() == hasta_str,
+        }
+        for nombre, d, h in [
+            ("Hoy", hoy, hoy),
+            ("Ayer", ayer, ayer),
+            ("7 días", hoy - timedelta(days=6), hoy),
+            ("Este mes", hoy.replace(day=1), hoy),
+        ]
+    ]
 
     return render_template(
         "ventas/index.html",
-        resumen=resumen,
-        productos_top=productos_top,
-        clientes_top=clientes_top,
         historial=historial,
+        cantidad=cantidad,
+        total_periodo=total_periodo,
+        desde_str=desde_str,
+        hasta_str=hasta_str,
+        atajos=atajos,
         formatear_moneda=formatear_moneda,
     )
 
@@ -94,7 +137,7 @@ def editar(id_venta: int):
     venta = db.session.get(Venta, id_venta)
     if not venta or not venta.detalles:
         flash("Venta no encontrada.", "warning")
-        return redirect(url_for("dashboard.index"))
+        return redirect(url_for("ventas.index"))
 
     detalle = venta.detalles[0]
     clientes = Cliente.query.order_by(Cliente.nombre).all()
@@ -109,7 +152,7 @@ def editar(id_venta: int):
                 id_cliente=_resolver_id_cliente(),
             )
             flash("Venta actualizada correctamente.", "success")
-            return redirect(url_for("dashboard.index"))
+            return redirect(url_for("ventas.index"))
         except (ValueError, KeyError) as exc:
             flash(str(exc) if str(exc) else "Datos inválidos.", "danger")
 
@@ -132,4 +175,4 @@ def eliminar(id_venta: int):
     except ValueError as exc:
         flash(str(exc), "warning")
 
-    return redirect(url_for("dashboard.index"))
+    return redirect(url_for("ventas.index"))
