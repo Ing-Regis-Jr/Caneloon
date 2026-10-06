@@ -6,7 +6,7 @@ MONEDA_SIMBOLO = "Bs."
 
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dulce-limon-dev-key-change-in-production")
+    SECRET_KEY = os.environ.get("SECRET_KEY", "caneloon-dev-key-change-in-production")
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR, 'database.db')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STOCK_BAJO_UMBRAL = STOCK_BAJO_UMBRAL

@@ -6,23 +6,24 @@
 <div class="login-page">
     <div class="login-card">
         <div class="login-brand">
-            <span class="login-icon">🍋</span>
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo de Caneloon" class="login-logo">
             <h1>{{ app_name }}</h1>
             <p class="text-muted">Sistema de gestión de postres</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
 
         <form method="POST" action="{{ url_for('auth.login') }}">
             <div class="mb-3">
                 <label for="username" class="form-label">Usuario</label>
-                <input type="text" class="form-control form-control-lg" id="username" name="username" required autofocus>
+                <input type="text" class="form-control form-control-lg" id="username" name="username" required
+                    autofocus>
             </div>
             <div class="mb-4">
                 <label for="password" class="form-label">Contraseña</label>
@@ -31,9 +32,7 @@
             <button type="submit" class="btn btn-primary btn-lg w-100">Entrar</button>
         </form>
 
-        <p class="login-hint text-muted mt-4">
-            Usuario inicial: <strong>admin</strong> / Contraseña: <strong>admin123</strong>
-        </p>
+
     </div>
 </div>
 {% endblock %}

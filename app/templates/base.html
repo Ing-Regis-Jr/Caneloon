@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,100 +10,110 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
+
 <body>
     {% if usuario_actual and usuario_actual.is_authenticated %}
     <div class="app-layout">
         <aside class="sidebar d-none d-lg-flex">
-    <div class="sidebar-brand">
-        <img
-            src="{{ url_for('static', filename='img/logo.png') }}"
-            alt="Logo de Caneloon"
-            class="brand-logo"
-        >
-        <div class="brand-name">
-            <span class="brand-title">CANELOON</span>
-            <span class="brand-subtitle">Gestión del negocio</span>
-        </div>
-    </div>
+            <div class="sidebar-brand">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo de Caneloon" class="brand-logo">
+                <div class="brand-name">
+                    <span class="brand-title">CANELOON</span>
+                    <span class="brand-subtitle">Gestión del negocio</span>
+                </div>
+            </div>
 
-    <nav class="sidebar-nav">
+            <nav class="sidebar-nav">
 
-        <div class="sidebar-section">
-            <span class="sidebar-section-title">PRINCIPAL</span>
+                <div class="sidebar-section">
+                    <span class="sidebar-section-title">PRINCIPAL</span>
 
-            <a href="{{ url_for('dashboard.index') }}"
-               class="nav-link-app {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
-                <i class="bi bi-grid-1x2"></i>
-                <span>Dashboard</span>
-            </a>
-        </div>
+                    <a href="{{ url_for('dashboard.index') }}"
+                        class="nav-link-app {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                        <i class="bi bi-grid-1x2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
 
-        <div class="sidebar-section">
-            <span class="sidebar-section-title">GESTIÓN</span>
+                <div class="sidebar-section">
+                    <span class="sidebar-section-title">GESTIÓN</span>
 
-            <a href="{{ url_for('ventas.registrar') }}"
-               class="nav-link-app {% if request.endpoint == 'ventas.registrar' %}active{% endif %}">
-                <i class="bi bi-cart-plus"></i>
-                <span>Registrar venta</span>
-            </a>
+                    <a href="{{ url_for('ventas.registrar') }}"
+                        class="nav-link-app {% if request.endpoint == 'ventas.registrar' %}active{% endif %}">
+                        <i class="bi bi-cart-plus"></i>
+                        <span>Registrar venta</span>
+                    </a>
 
-            <a href="{{ url_for('clientes.index') }}"
-               class="nav-link-app {% if request.blueprint == 'clientes' %}active{% endif %}">
-                <i class="bi bi-people"></i>
-                <span>Clientes</span>
-            </a>
+                    <a href="{{ url_for('ventas.index') }}"
+                        class="nav-link-app {% if request.blueprint == 'ventas' and request.endpoint != 'ventas.registrar' %}active{% endif %}">
+                        <i class="bi bi-receipt"></i>
+                        <span>Ventas</span>
 
-            <a href="{{ url_for('productos.index') }}"
-               class="nav-link-app {% if request.blueprint == 'productos' %}active{% endif %}">
-                <i class="bi bi-box-seam"></i>
-                <span>Productos</span>
-            </a>
+                    </a>
+                    <a href="{{ url_for('clientes.index') }}"
+                        class="nav-link-app {% if request.blueprint == 'clientes' %}active{% endif %}">
+                        <i class="bi bi-people"></i>
+                        <span>Clientes</span>
+                    </a>
 
-            <a href="{{ url_for('inversion.index') }}"
-               class="nav-link-app {% if request.blueprint == 'inversion' %}active{% endif %}">
-                <i class="bi bi-wallet2"></i>
-                <span>Economía</span>
-            </a>
-        </div>
+                    <a href="{{ url_for('productos.index') }}"
+                        class="nav-link-app {% if request.blueprint == 'productos' %}active{% endif %}">
+                        <i class="bi bi-box-seam"></i>
+                        <span>Productos</span>
+                    </a>
 
-        <div class="sidebar-section sidebar-system">
-            <span class="sidebar-section-title">SISTEMA</span>
+                    <a href="{{ url_for('inversion.index') }}"
+                        class="nav-link-app {% if request.blueprint == 'inversion' %}active{% endif %}">
+                        <i class="bi bi-wallet2"></i>
+                        <span>Economía</span>
+                    </a>
+                </div>
 
-            <a href="{{ url_for('auth.logout') }}"
-               class="nav-link-app logout-link">
-                <i class="bi bi-box-arrow-right"></i>
-                <span>Cerrar sesión</span>
-            </a>
-        </div>
+                <div class="sidebar-section sidebar-system">
+                    <span class="sidebar-section-title">SISTEMA</span>
 
-    </nav>
+                    <a href="{{ url_for('auth.logout') }}" class="nav-link-app logout-link">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Cerrar sesión</span>
+                    </a>
+                </div>
 
-    <div class="sidebar-footer">
-        <span class="developed-label">Developed by</span>
-        <span class="developer-name">Regis Salvador</span>
-    </div>
-</aside>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span class="developed-label">Developed by</span>
+                <span class="developer-name">Regis Salvador</span>
+            </div>
+        </aside>
 
         <main class="main-content">
             <header class="mobile-header d-lg-none">
+
                 <div class="mobile-brand">
-                    <span>🍋</span> {{ app_name }}
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo de Caneloon"
+                        class="mobile-brand-logo">
+                    <span>{{ app_name }}</span>
                 </div>
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-box-arrow-right"></i>
-                </a>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('clientes.index') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-people"></i>
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </a>
+                </div>
             </header>
 
             <div class="content-area">
                 {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
                 {% endwith %}
 
                 {% block content %}{% endblock %}
@@ -110,42 +121,39 @@
         </main>
 
         <nav class="bottom-nav d-lg-none">
-            <a href="{{ url_for('dashboard.index') }}" class="bottom-nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
-                <i class="bi bi-house-door"></i>
-                <span>Inicio</span>
+            <a href="{{ url_for('dashboard.index') }}"
+                class="bottom-nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Dashboard</span>
             </a>
-            <a href="{{ url_for('productos.index') }}" class="bottom-nav-item {% if request.blueprint == 'productos' %}active{% endif %}">
+            <a href="{{ url_for('productos.index') }}"
+                class="bottom-nav-item {% if request.blueprint == 'productos' %}active{% endif %}">
                 <i class="bi bi-box-seam"></i>
                 <span>Productos</span>
             </a>
-            <a href="{{ url_for('ventas.registrar') }}" class="bottom-nav-item bottom-nav-fab {% if request.endpoint == 'ventas.registrar' %}active{% endif %}">
+            <a href="{{ url_for('ventas.registrar') }}"
+                class="bottom-nav-item bottom-nav-fab {% if request.endpoint == 'ventas.registrar' %}active{% endif %}">
                 <i class="bi bi-plus-lg"></i>
                 <span>Vender</span>
             </a>
-            <a href="{{ url_for('ventas.index') }}" class="bottom-nav-item {% if request.blueprint == 'ventas' and request.endpoint != 'ventas.registrar' %}active{% endif %}">
-                <i class="bi bi-graph-up"></i>
+            <a href="{{ url_for('ventas.index') }}"
+                class="bottom-nav-item {% if request.blueprint == 'ventas' and request.endpoint != 'ventas.registrar' %}active{% endif %}">
+                <i class="bi bi-receipt"></i>
                 <span>Ventas</span>
             </a>
-            <a href="{{ url_for('inversion.index') }}" class="bottom-nav-item {% if request.blueprint == 'inversion' %}active{% endif %}">
-                <i class="bi bi-piggy-bank"></i>
-                <span>Inversión</span>
+            <a href="{{ url_for('inversion.index') }}"
+                class="bottom-nav-item {% if request.blueprint == 'inversion' %}active{% endif %}">
+                <i class="bi bi-wallet2"></i>
+                <span>Economía</span>
             </a>
         </nav>
     </div>
     {% else %}
-        {% block auth_content %}{% endblock %}
+    {% block auth_content %}{% endblock %}
     {% endif %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block scripts %}{% endblock %}
-
-   <footer class="mt-5 py-4 border-top">
-    <div class="container text-center">
-        <span class="text-muted small">
-            by
-            <strong class="text-dark">REGIS SALVADOR</strong>
-        </span>
-    </div>
-</footer>
 </body>
+
 </html>
