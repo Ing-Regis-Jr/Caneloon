@@ -76,7 +76,7 @@ def registrar():
                 id_cliente=_resolver_id_cliente(),
             )
             flash("Venta registrada correctamente.", "success")
-            return redirect(url_for("ventas.index"))
+            return redirect(url_for("dashboard.index"))
         except (ValueError, KeyError) as exc:
             flash(str(exc) if str(exc) else "Datos inválidos.", "danger")
 
@@ -94,7 +94,7 @@ def editar(id_venta: int):
     venta = db.session.get(Venta, id_venta)
     if not venta or not venta.detalles:
         flash("Venta no encontrada.", "warning")
-        return redirect(url_for("ventas.index"))
+        return redirect(url_for("dashboard.index"))
 
     detalle = venta.detalles[0]
     clientes = Cliente.query.order_by(Cliente.nombre).all()
@@ -109,7 +109,7 @@ def editar(id_venta: int):
                 id_cliente=_resolver_id_cliente(),
             )
             flash("Venta actualizada correctamente.", "success")
-            return redirect(url_for("ventas.index"))
+            return redirect(url_for("dashboard.index"))
         except (ValueError, KeyError) as exc:
             flash(str(exc) if str(exc) else "Datos inválidos.", "danger")
 
@@ -132,4 +132,4 @@ def eliminar(id_venta: int):
     except ValueError as exc:
         flash(str(exc), "warning")
 
-    return redirect(url_for("ventas.index"))
+    return redirect(url_for("dashboard.index"))

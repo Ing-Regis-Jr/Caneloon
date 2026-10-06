@@ -3,61 +3,198 @@
 {% block title %}Registrar venta — {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Registrar venta</h1>
-    <p>Rápido y sencillo — un producto por venta</p>
-</div>
+<div class="sale-page">
 
-<div class="section-card form-card">
-    {% if productos %}
-    <form method="POST" id="form-venta">
-        <div class="mb-3">
-            <label for="nombre_cliente" class="form-label">Cliente <span class="text-muted">(opcional)</span></label>
-            <input type="text" class="form-control form-control-lg" id="nombre_cliente" name="nombre_cliente"
-                   list="clientes-existentes" placeholder="Escribe el nombre del cliente" autocomplete="off">
-            <datalist id="clientes-existentes">
-                {% for cliente in clientes %}
-                <option value="{{ cliente.nombre }}"></option>
-                {% endfor %}
-            </datalist>
-            <small class="text-muted">Deja vacío si no aplica. Si el cliente es nuevo, se guardará automáticamente.</small>
+    <div class="page-header sale-header">
+        <div>
+            <span class="sale-eyebrow">
+                <i class="bi bi-cart-plus"></i> NUEVA OPERACIÓN
+            </span>
+            <h1>Registrar venta</h1>
+            <p>Registra una nueva venta de forma rápida y sencilla.</p>
         </div>
-        <div class="mb-3">
-            <label for="id_producto" class="form-label">Producto</label>
-            <select class="form-select form-select-lg" id="id_producto" name="id_producto" required>
-                <option value="">Selecciona un producto</option>
-                {% for producto in productos %}
-                <option value="{{ producto.id_producto }}"
-                        data-precio="{{ producto.precio_venta }}"
-                        data-stock="{{ producto.stock }}">
-                    {{ producto.nombre }} — {{ formatear_moneda(producto.precio_venta) }} (Stock: {{ producto.stock }})
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="cantidad" class="form-label">Cantidad</label>
-            <input type="number" class="form-control form-control-lg" id="cantidad" name="cantidad"
-                   min="1" value="1" required>
-        </div>
-        <div class="preview-box mb-4" id="preview-box">
-            <div class="d-flex justify-content-between">
-                <span>Total estimado:</span>
-                <strong id="preview-total">Bs. 0.00</strong>
-            </div>
-            <small class="text-muted" id="preview-stock"></small>
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg w-100">
-            <i class="bi bi-check-lg"></i> Registrar venta
-        </button>
-    </form>
-    {% else %}
-    <div class="empty-state">
-        <i class="bi bi-exclamation-circle"></i>
-        <p>No hay productos con stock disponible.</p>
-        <a href="{{ url_for('productos.nuevo') }}" class="btn btn-primary">Agregar producto</a>
     </div>
+
+    {% if productos %}
+
+    <form method="POST" id="form-venta" class="sale-form">
+
+        <div class="sale-layout">
+
+            <!-- DATOS DE LA VENTA -->
+            <section class="sale-card sale-form-card">
+
+                <div class="sale-card-header">
+                    <div class="sale-card-icon">
+                        <i class="bi bi-cart-plus"></i>
+                    </div>
+                    <div>
+                        <h2>Datos de la venta</h2>
+                        <p>Completa la información de la operación.</p>
+                    </div>
+                </div>
+
+                <div class="sale-fields">
+
+                    <div class="sale-field">
+                        <label for="nombre_cliente" class="form-label">
+                            Cliente
+                            <span>(opcional)</span>
+                        </label>
+
+                        <div class="sale-input-wrapper">
+                            <i class="bi bi-person"></i>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="nombre_cliente"
+                                name="nombre_cliente"
+                                list="clientes-existentes"
+                                placeholder="Escribe el nombre del cliente"
+                                autocomplete="off"
+                            >
+                        </div>
+
+                        <datalist id="clientes-existentes">
+                            {% for cliente in clientes %}
+                            <option value="{{ cliente.nombre }}"></option>
+                            {% endfor %}
+                        </datalist>
+
+                        <small>
+                            Puedes dejarlo vacío si la venta no tiene cliente.
+                        </small>
+                    </div>
+
+                    <div class="sale-field">
+                        <label for="id_producto" class="form-label">
+                            Producto
+                        </label>
+
+                        <div class="sale-input-wrapper">
+                            <i class="bi bi-box-seam"></i>
+                            <select
+                                class="form-select"
+                                id="id_producto"
+                                name="id_producto"
+                                required
+                            >
+                                <option value="">Selecciona un producto</option>
+
+                                {% for producto in productos %}
+                                <option
+                                    value="{{ producto.id_producto }}"
+                                    data-precio="{{ producto.precio_venta }}"
+                                    data-stock="{{ producto.stock }}"
+                                >
+                                    {{ producto.nombre }} —
+                                    {{ formatear_moneda(producto.precio_venta) }}
+                                    (Stock: {{ producto.stock }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="sale-field">
+                        <label for="cantidad" class="form-label">
+                            Cantidad
+                        </label>
+
+                        <div class="quantity-wrapper">
+                            <div class="quantity-input">
+                                <i class="bi bi-hash"></i>
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="cantidad"
+                                    name="cantidad"
+                                    min="1"
+                                    value="1"
+                                    required
+                                >
+                            </div>
+
+                            <span class="quantity-label">unidades</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="sale-actions">
+                    <button type="submit" class="btn btn-primary sale-submit">
+                        <i class="bi bi-check-lg"></i>
+                        Registrar venta
+                    </button>
+                </div>
+
+            </section>
+
+
+            <!-- RESUMEN -->
+            <aside class="sale-card sale-summary-card">
+
+                <div class="sale-card-header">
+                    <div class="sale-card-icon">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <div>
+                        <h2>Resumen</h2>
+                        <p>Vista previa de la venta.</p>
+                    </div>
+                </div>
+
+                <div class="sale-summary-content">
+
+                    <div class="summary-product">
+                        <span class="summary-label">Producto</span>
+                        <strong id="summary-product">
+                            Selecciona un producto
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Cantidad</span>
+                        <strong id="summary-quantity">1</strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Precio unitario</span>
+                        <strong id="summary-price">Bs. 0.00</strong>
+                    </div>
+
+                    <div class="summary-stock">
+                        <i class="bi bi-box-seam"></i>
+                        <span id="preview-stock"></span>
+                    </div>
+
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <strong id="preview-total">Bs. 0.00</strong>
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </div>
+
+    </form>
+
+    {% else %}
+
+    <div class="sale-card empty-sale">
+        <div class="empty-state">
+            <i class="bi bi-exclamation-circle"></i>
+            <p>No hay productos con stock disponible.</p>
+            <a href="{{ url_for('productos.nuevo') }}" class="btn btn-primary">
+                Agregar producto
+            </a>
+        </div>
+    </div>
+
     {% endif %}
+
 </div>
 {% endblock %}
 
@@ -65,28 +202,63 @@
 <script>
     const selectProducto = document.getElementById('id_producto');
     const inputCantidad = document.getElementById('cantidad');
-    const previewBox = document.getElementById('preview-box');
-    const previewTotal = document.getElementById('preview-total');
-    const previewStock = document.getElementById('preview-stock');
 
-    function actualizarPreview() {
-        const option = selectProducto.options[selectProducto.selectedIndex];
-        if (!option || !option.value) {
-            previewBox.style.display = 'none';
+    const summaryProduct = document.getElementById('summary-product');
+    const summaryQuantity = document.getElementById('summary-quantity');
+    const summaryPrice = document.getElementById('summary-price');
+    const previewStock = document.getElementById('preview-stock');
+    const previewTotal = document.getElementById('preview-total');
+
+    function actualizarResumen() {
+        if (!selectProducto || !inputCantidad) {
             return;
         }
-        const precio = parseFloat(option.dataset.precio);
-        const stock = parseInt(option.dataset.stock);
-        const cantidad = parseInt(inputCantidad.value) || 0;
-        previewBox.style.display = 'block';
-        previewTotal.textContent = 'Bs. ' + (precio * cantidad).toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        previewStock.textContent = 'Stock restante: ' + Math.max(0, stock - cantidad);
+
+        const option = selectProducto.options[selectProducto.selectedIndex];
+
+        if (!option || !option.value) {
+            summaryProduct.textContent = 'Selecciona un producto';
+            summaryQuantity.textContent = '1';
+            summaryPrice.textContent = 'Bs. 0.00';
+            previewStock.textContent = '';
+            previewTotal.textContent = 'Bs. 0.00';
+            return;
+        }
+
+        const precio = parseFloat(option.dataset.precio) || 0;
+        const stock = parseInt(option.dataset.stock) || 0;
+        const cantidad = Math.max(1, parseInt(inputCantidad.value) || 1);
+
+        const total = precio * cantidad;
+        const stockRestante = stock - cantidad;
+
+        summaryProduct.textContent = option.textContent
+            .split('—')[0]
+            .trim();
+
+        summaryQuantity.textContent = cantidad;
+
+        summaryPrice.textContent =
+            'Bs. ' + precio.toLocaleString('es-BO', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        previewStock.textContent =
+            'Stock restante: ' + Math.max(0, stockRestante);
+
+        previewTotal.textContent =
+            'Bs. ' + total.toLocaleString('es-BO', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
     }
 
-    if (selectProducto) {
-        selectProducto.addEventListener('change', actualizarPreview);
-        inputCantidad.addEventListener('input', actualizarPreview);
-        actualizarPreview();
+    if (selectProducto && inputCantidad) {
+        selectProducto.addEventListener('change', actualizarResumen);
+        inputCantidad.addEventListener('input', actualizarResumen);
+
+        actualizarResumen();
     }
 </script>
 {% endblock %}
