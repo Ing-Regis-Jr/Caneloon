@@ -1,68 +1,396 @@
+
 {% extends "base.html" %}
 
 {% block title %}Clientes — {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
-    <div>
-        <h1>Clientes</h1>
-        <p>Gestiona tus clientes frecuentes</p>
-    </div>
-    <a href="{{ url_for('clientes.nuevo') }}" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Nuevo cliente
-    </a>
-</div>
+<div class="dashboard-page clients-page">
 
-{% if clientes %}
-<div class="section-card">
-    <div class="desktop-table">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for cliente in clientes %}
-                    <tr>
-                        <td><strong>{{ cliente.nombre }}</strong></td>
-                        <td>
-                            <a href="{{ url_for('clientes.editar', id_cliente=cliente.id_cliente) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil"></i> Editar
-                            </a>
-                            <form method="POST" action="{{ url_for('clientes.eliminar', id_cliente=cliente.id_cliente) }}" class="d-inline" onsubmit="return confirm('¿Eliminar cliente?')">
-                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <!-- ENCABEZADO -->
+    <div class="dashboard-header">
+        <div>
+            <h1>CLIENTES</h1>
+            <p>Conoce y organiza a las personas que compran en tu negocio.</p>
         </div>
+
+        <a href="{{ url_for('clientes.nuevo') }}" class="dashboard-sale-btn">
+            <i class="bi bi-person-plus"></i>
+            Nuevo cliente
+        </a>
     </div>
-    <div class="mobile-card-list">
-        {% for cliente in clientes %}
-        <div class="mobile-data-card">
-            <strong>{{ cliente.nombre }}</strong>
-            <div class="d-flex gap-2 mt-2">
-                <a href="{{ url_for('clientes.editar', id_cliente=cliente.id_cliente) }}" class="btn btn-sm btn-outline-primary flex-fill">Editar</a>
-                <form method="POST" action="{{ url_for('clientes.eliminar', id_cliente=cliente.id_cliente) }}" class="flex-fill" onsubmit="return confirm('¿Eliminar?')">
-                    <button type="submit" class="btn btn-sm btn-outline-danger w-100">Eliminar</button>
-                </form>
+
+
+    <!-- RESUMEN -->
+    <section class="dashboard-summary">
+
+        <div class="summary-card client-summary-card">
+            <div class="summary-icon">
+                <i class="bi bi-people"></i>
+            </div>
+
+            <div class="summary-content">
+                <span>Clientes registrados</span>
+                <strong>{{ total_clientes }}</strong>
+                <small>Total de clientes en Caneloon</small>
             </div>
         </div>
-        {% endfor %}
-    </div>
+
+
+        <div class="summary-card client-summary-card client-summary-active">
+            <div class="summary-icon">
+                <i class="bi bi-person-check"></i>
+            </div>
+
+            <div class="summary-content">
+                <span>Clientes con compras</span>
+                <strong>{{ clientes_con_compras }}</strong>
+                <small>Clientes que ya realizaron una compra</small>
+            </div>
+        </div>
+
+
+        <div class="summary-card client-summary-card client-summary-money">
+            <div class="summary-icon">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+
+            <div class="summary-content">
+                <span>Total comprado</span>
+                <strong>{{ formatear_moneda(total_gastado) }}</strong>
+                <small>Suma de ventas asociadas a clientes</small>
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- BUSCADOR -->
+    <form method="GET" class="clients-search">
+
+        <div class="clients-search-input">
+            <i class="bi bi-search"></i>
+
+            <input
+                type="text"
+                name="q"
+                value="{{ busqueda }}"
+                placeholder="Buscar cliente..."
+                autocomplete="off"
+            >
+
+            {% if busqueda %}
+            <a
+                href="{{ url_for('clientes.index') }}"
+                class="clients-search-clear"
+                title="Limpiar búsqueda"
+            >
+                <i class="bi bi-x-lg"></i>
+            </a>
+            {% endif %}
+        </div>
+
+        {% if busqueda %}
+        <span class="clients-search-count">
+            {{ clientes|length }}
+            resultado{% if clientes|length != 1 %}s{% endif %}
+        </span>
+        {% endif %}
+
+    </form>
+
+
+    <!-- LISTADO -->
+    <article class="dashboard-panel clients-panel">
+
+        <div class="panel-header">
+            <div>
+                <span class="panel-icon">
+                    <i class="bi bi-people"></i>
+                </span>
+
+                <div>
+                    <h2>LISTA DE CLIENTES</h2>
+
+                    <p>
+                        {% if busqueda %}
+                            Resultados para “{{ busqueda }}”
+                        {% else %}
+                            {{ clientes|length }}
+                            cliente{% if clientes|length != 1 %}s{% endif %}
+                            registrados
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+
+        {% if clientes %}
+
+        <!-- ESCRITORIO -->
+        <div class="desktop-table">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle clients-table">
+
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Compras</th>
+                            <th>Total gastado</th>
+                            <th>Última compra</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for cliente in clientes %}
+
+                        <tr>
+
+                            <!-- CLIENTE -->
+                            <td>
+                                <div class="client-name">
+
+                                    <span class="client-avatar">
+                                        <i class="bi bi-person"></i>
+                                    </span>
+
+                                    <strong>
+                                        {{ cliente.nombre }}
+                                    </strong>
+
+                                </div>
+                            </td>
+
+
+                            <!-- COMPRAS -->
+                            <td>
+                                <span class="client-purchase-badge">
+                                    {{ cliente.compras }}
+                                </span>
+                            </td>
+
+
+                            <!-- TOTAL -->
+                            <td>
+                                <strong class="client-money">
+                                    {{ formatear_moneda(cliente.gastado) }}
+                                </strong>
+                            </td>
+
+
+                            <!-- ÚLTIMA COMPRA -->
+                            <td>
+
+                                {% if cliente.ultima_compra %}
+
+                                <span class="client-last-purchase">
+                                    {{ cliente.ultima_compra.strftime('%d/%m/%Y') }}
+                                </span>
+
+                                {% else %}
+
+                                <span class="client-no-purchase">
+                                    Sin compras
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- ACCIONES -->
+                            <td>
+
+                                <div class="client-actions">
+
+                                    <a
+                                        href="{{ url_for('clientes.editar', id_cliente=cliente.id_cliente) }}"
+                                        class="btn btn-sm btn-outline-primary"
+                                        title="Editar cliente"
+                                    >
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('clientes.eliminar', id_cliente=cliente.id_cliente) }}"
+                                        onsubmit="return confirm('¿Eliminar este cliente?')"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-outline-danger"
+                                            title="Eliminar cliente"
+                                        >
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- MÓVIL -->
+        <div class="mobile-card-list clients-mobile-list">
+
+            {% for cliente in clientes %}
+
+            <div class="mobile-data-card client-card">
+
+                <div class="client-card-header">
+
+                    <div class="client-name">
+
+                        <span class="client-avatar">
+                            <i class="bi bi-person"></i>
+                        </span>
+
+                        <strong>
+                            {{ cliente.nombre }}
+                        </strong>
+
+                    </div>
+
+                    <span class="client-purchase-badge">
+                        {{ cliente.compras }}
+                        compra{% if cliente.compras != 1 %}s{% endif %}
+                    </span>
+
+                </div>
+
+
+                <div class="client-card-data">
+
+                    <div class="row-item">
+                        <strong>Total gastado</strong>
+
+                        <span class="client-money">
+                            {{ formatear_moneda(cliente.gastado) }}
+                        </span>
+                    </div>
+
+
+                    <div class="row-item">
+                        <strong>Última compra</strong>
+
+                        <span>
+
+                            {% if cliente.ultima_compra %}
+                                {{ cliente.ultima_compra.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                Sin compras
+                            {% endif %}
+
+                        </span>
+                    </div>
+
+                </div>
+
+
+                <div class="client-actions client-mobile-actions">
+
+                    <a
+                        href="{{ url_for('clientes.editar', id_cliente=cliente.id_cliente) }}"
+                        class="btn btn-sm btn-outline-primary flex-fill"
+                    >
+                        <i class="bi bi-pencil"></i>
+                        Editar
+                    </a>
+
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('clientes.eliminar', id_cliente=cliente.id_cliente) }}"
+                        class="flex-fill"
+                        onsubmit="return confirm('¿Eliminar este cliente?')"
+                    >
+
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-outline-danger w-100"
+                        >
+                            <i class="bi bi-trash"></i>
+                            Eliminar
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        {% else %}
+
+        <!-- SIN RESULTADOS -->
+        <div class="dashboard-empty clients-empty">
+
+            <i class="bi bi-people"></i>
+
+            {% if busqueda %}
+
+                <strong>No encontramos clientes</strong>
+
+                <span>
+                    No hay clientes que coincidan con
+                    “{{ busqueda }}”.
+                </span>
+
+                <a
+                    href="{{ url_for('clientes.index') }}"
+                    class="btn btn-outline-primary mt-2"
+                >
+                    Ver todos
+                </a>
+
+            {% else %}
+
+                <strong>Aún no tienes clientes registrados</strong>
+
+                <span>
+                    Agrega tu primer cliente para comenzar a llevar
+                    un historial de sus compras.
+                </span>
+
+                <a
+                    href="{{ url_for('clientes.nuevo') }}"
+                    class="btn btn-primary mt-2"
+                >
+                    <i class="bi bi-person-plus"></i>
+                    Agregar cliente
+                </a>
+
+            {% endif %}
+
+        </div>
+
+        {% endif %}
+
+    </article>
+
 </div>
-{% else %}
-<div class="section-card">
-    <div class="empty-state">
-        <i class="bi bi-people"></i>
-        <p>Aún no tienes clientes registrados.</p>
-        <a href="{{ url_for('clientes.nuevo') }}" class="btn btn-primary">Agregar cliente</a>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
+
