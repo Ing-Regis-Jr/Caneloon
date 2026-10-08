@@ -8,6 +8,7 @@ from app.utils import formatear_moneda
 from datetime import date, datetime, time, timedelta
 
 from sqlalchemy import func
+
 ventas_bp = Blueprint("ventas", __name__, url_prefix="/ventas")
 
 
@@ -22,7 +23,8 @@ def _productos_para_edicion(venta: Venta) -> list[dict]:
                     "id_producto": producto.id_producto,
                     "nombre": producto.nombre,
                     "precio_venta": producto.precio_venta,
-                    "stock_disponible": producto.stock + en_venta.get(producto.id_producto, 0),
+                    "stock_disponible": producto.stock
+                    + en_venta.get(producto.id_producto, 0),
                 }
             )
 
@@ -38,6 +40,7 @@ def _leer_items() -> list[tuple[int, int]]:
             continue
         items.append((int(id_producto), int(cantidad)))
     return items
+
 
 def _resolver_id_cliente() -> int | None:
     id_cliente = request.form.get("id_cliente") or None
@@ -113,7 +116,14 @@ def index():
 @ventas_bp.route("/registrar", methods=["GET", "POST"])
 @login_required
 def registrar():
-    productos = Producto.query.filter(Producto.stock > 0).order_by(Producto.nombre).all()
+    productos = (
+        Producto.query.filter(
+            Producto.stock > 0,
+            Producto.activo.is_(True),
+        )
+        .order_by(Producto.nombre)
+        .all()
+    )
     clientes = Cliente.query.order_by(Cliente.nombre).all()
 
     if request.method == "POST":
@@ -143,7 +153,6 @@ def editar(id_venta: int):
         flash("Venta no encontrada.", "warning")
         return redirect(url_for("ventas.index"))
 
-    
     clientes = Cliente.query.order_by(Cliente.nombre).all()
     productos = _productos_para_edicion(venta)
 
@@ -163,7 +172,8 @@ def editar(id_venta: int):
         "ventas/editar.html",
         venta=venta,
         items_iniciales=[
-            {"id": d.id_producto, "cantidad": d.cantidad} for d in venta.detalles],
+            {"id": d.id_producto, "cantidad": d.cantidad} for d in venta.detalles
+        ],
         productos=productos,
         clientes=clientes,
         formatear_moneda=formatear_moneda,

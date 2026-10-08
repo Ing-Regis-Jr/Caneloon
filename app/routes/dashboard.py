@@ -27,7 +27,7 @@ def index():
 
     productos = (
         Producto.query
-        .filter(Producto.stock > 0)
+        .filter(Producto.stock > 0, Producto.activo.is_(True),)
         .order_by(Producto.nombre)
         .all()
     )

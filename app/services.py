@@ -35,6 +35,7 @@ class VentaService:
         db.session.add(cliente)
         db.session.flush()
         return cliente
+
     @staticmethod
     def _normalizar_items(items: list[tuple[int, int]]) -> dict[int, int]:
         """Une productos repetidos y valida cantidades."""
@@ -48,68 +49,117 @@ class VentaService:
         return agrupados
 
     @staticmethod
-    def _aplicar_items(venta: Venta, items: dict[int, int]) -> None:
-        """Crea los detalles y descuenta stock. Asume stock ya restaurado."""
+    def _aplicar_items(
+        venta: Venta,
+        items: dict[int, int],
+        productos_archivados_permitidos: set[int] | None = None,
+    ) -> None:
+        """Crea los detalles y descuenta stock."""
         total = 0.0
+
         for id_producto, cantidad in items.items():
             producto = db.session.get(Producto, id_producto)
+
             if not producto:
                 raise ValueError("Producto no encontrado.")
+
+            if (
+    not producto.activo
+    and id_producto not in (productos_archivados_permitidos or set())
+):
+                raise ValueError(
+                    f"El producto {producto.nombre} está archivado "
+                    "y no puede utilizarse en nuevas ventas."
+                )
+
             if producto.stock < cantidad:
                 raise ValueError(
-                    f"Stock insuficiente de {producto.nombre}. "
-                    f"Disponible: {producto.stock}, solicitado: {cantidad}."
+                    f"Stock insuficiente para {producto.nombre}. "
+                    f"Disponible: {producto.stock}."
                 )
+
             subtotal = producto.precio_venta * cantidad
             costo_total = producto.costo_unitario * cantidad
+
             venta.detalles.append(
                 DetalleVenta(
-                    producto=producto,
+                    id_producto=producto.id_producto,
                     cantidad=cantidad,
                     precio_unitario=producto.precio_venta,
                     subtotal=subtotal,
                     costo_total=costo_total,
-                    ganancia=subtotal - costo_total,
+                    ganancia=subtotal
                 )
             )
+
             producto.stock -= cantidad
             total += subtotal
+
         venta.total = total
 
     @staticmethod
-    def registrar_venta(items: list[tuple[int, int]], id_cliente: int | None) -> Venta:
+    def registrar_venta(
+        items: list[tuple[int, int]],
+        id_cliente: int | None,
+    ) -> Venta:
         agrupados = VentaService._normalizar_items(items)
         venta = Venta(id_cliente=id_cliente, total=0.0)
+
         try:
+            # Las ventas nuevas solo admiten productos activos.
             VentaService._aplicar_items(venta, agrupados)
+
             db.session.add(venta)
             db.session.commit()
+
         except Exception:
             db.session.rollback()
             raise
+
         return venta
 
     @staticmethod
     def actualizar_venta(
-        id_venta: int, items: list[tuple[int, int]], id_cliente: int | None
+        id_venta: int,
+        items: list[tuple[int, int]],
+        id_cliente: int | None,
     ) -> Venta:
         venta = db.session.get(Venta, id_venta)
+
         if not venta or not venta.detalles:
             raise ValueError("Venta no encontrada.")
 
+        # Guardamos los productos que ya pertenecían a esta venta.
+        productos_originales = {
+            detalle.id_producto for detalle in venta.detalles
+        }
+
         agrupados = VentaService._normalizar_items(items)
+
         try:
+            # Devolvemos al inventario las cantidades de la venta anterior.
             for detalle in list(venta.detalles):
                 detalle.producto.stock += detalle.cantidad
+
             venta.detalles.clear()
             db.session.flush()
 
             venta.id_cliente = id_cliente
-            VentaService._aplicar_items(venta, agrupados)
+
+            # Solo permite conservar productos archivados que ya estaban
+            # incluidos en esta venta antes de editarla.
+            VentaService._aplicar_items(
+                venta,
+                agrupados,
+                productos_archivados_permitidos=productos_originales,
+            )
+
             db.session.commit()
+
         except Exception:
             db.session.rollback()
             raise
+
         return venta
 
     @staticmethod
@@ -127,16 +177,24 @@ class VentaService:
 class StatsService:
     @staticmethod
     def resumen_general() -> ResumenFinanciero:
-        ventas_totales = db.session.query(func.coalesce(func.sum(Venta.total), 0.0)).scalar()
-        costo_total = db.session.query(func.coalesce(func.sum(DetalleVenta.costo_total), 0.0)).scalar()
-        ganancia_neta = db.session.query(func.coalesce(func.sum(DetalleVenta.ganancia), 0.0)).scalar()
+        ventas_totales = db.session.query(
+            func.coalesce(func.sum(Venta.total), 0.0)
+        ).scalar()
+        costo_total = db.session.query(
+            func.coalesce(func.sum(DetalleVenta.costo_total), 0.0)
+        ).scalar()
+        ganancia_neta = db.session.query(
+            func.coalesce(func.sum(DetalleVenta.ganancia), 0.0)
+        ).scalar()
 
         productos = Producto.query.all()
         inversion_inventario = sum(p.costo_unitario * p.stock for p in productos)
         umbral = current_app.config["STOCK_BAJO_UMBRAL"]
         productos_stock_bajo = sum(1 for p in productos if p.stock <= umbral)
 
-        porcentaje = (ganancia_neta / ventas_totales * 100) if ventas_totales > 0 else 0.0
+        porcentaje = (
+            (ganancia_neta / ventas_totales * 100) if ventas_totales > 0 else 0.0
+        )
 
         return ResumenFinanciero(
             ventas_totales=float(ventas_totales),
@@ -162,7 +220,10 @@ class StatsService:
             .limit(limite)
             .all()
         )
-        return [(r.nombre, int(r.total_vendido or 0), float(r.ingresos or 0)) for r in resultados]
+        return [
+            (r.nombre, int(r.total_vendido or 0), float(r.ingresos or 0))
+            for r in resultados
+        ]
 
     @staticmethod
     def clientes_top(limite: int = 5) -> list[tuple[str, int, float]]:
@@ -178,7 +239,10 @@ class StatsService:
             .limit(limite)
             .all()
         )
-        return [(r.nombre, int(r.total_compras or 0), float(r.total_gastado or 0)) for r in resultados]
+        return [
+            (r.nombre, int(r.total_compras or 0), float(r.total_gastado or 0))
+            for r in resultados
+        ]
 
     @staticmethod
     def clientes_resumen(busqueda: str = "") -> list[dict]:

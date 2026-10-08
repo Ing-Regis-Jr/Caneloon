@@ -37,8 +37,13 @@ class Producto(db.Model):
     precio_venta = db.Column(db.Float, nullable=False)
     costo_unitario = db.Column(db.Float, nullable=False)
     stock = db.Column(db.Integer, nullable=False, default=0)
+    activo = db.Column(db.Boolean, nullable=False, default=True)
 
-    detalles = db.relationship("DetalleVenta", back_populates="producto", lazy="dynamic")
+    detalles = db.relationship(
+        "DetalleVenta",
+        back_populates="producto",
+        lazy="dynamic",
+    )
 
 
 class Venta(db.Model):
@@ -46,7 +51,9 @@ class Venta(db.Model):
 
     id_venta = db.Column(db.Integer, primary_key=True)
     fecha = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    id_cliente = db.Column(db.Integer, db.ForeignKey("clientes.id_cliente"), nullable=True)
+    id_cliente = db.Column(
+        db.Integer, db.ForeignKey("clientes.id_cliente"), nullable=True
+    )
     total = db.Column(db.Float, nullable=False, default=0.0)
 
     cliente = db.relationship("Cliente", back_populates="ventas")
@@ -63,7 +70,9 @@ class DetalleVenta(db.Model):
 
     id_detalle = db.Column(db.Integer, primary_key=True)
     id_venta = db.Column(db.Integer, db.ForeignKey("ventas.id_venta"), nullable=False)
-    id_producto = db.Column(db.Integer, db.ForeignKey("productos.id_producto"), nullable=False)
+    id_producto = db.Column(
+        db.Integer, db.ForeignKey("productos.id_producto"), nullable=False
+    )
     cantidad = db.Column(db.Integer, nullable=False)
     precio_unitario = db.Column(db.Float, nullable=False)
     subtotal = db.Column(db.Float, nullable=False)
