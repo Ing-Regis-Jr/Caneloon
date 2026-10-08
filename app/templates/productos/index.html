@@ -3,97 +3,597 @@
 {% block title %}Productos — {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
-    <div>
-        <h1>Productos</h1>
-        <p>Gestiona tu inventario de postres</p>
-    </div>
-    <a href="{{ url_for('productos.nuevo') }}" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Nuevo producto
-    </a>
-</div>
+<div class="dashboard-page products-page">
 
-<div class="action-bar">
-    <form class="search-form" method="GET">
-        <div class="input-group">
-            <input type="text" class="form-control" name="q" value="{{ busqueda }}" placeholder="Buscar producto...">
-            <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+    <!-- ENCABEZADO -->
+    <div class="dashboard-header">
+        <div>
+            <h1>PRODUCTOS</h1>
+            <p>Controla tu inventario, precios y stock.</p>
         </div>
-    </form>
-</div>
 
-{% if productos %}
-<div class="desktop-table">
-    <div class="section-card">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Precio venta</th>
-                        <th>Costo</th>
-                        <th>Stock</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for producto in productos %}
-                    <tr>
-                        <td><strong>{{ producto.nombre }}</strong></td>
-                        <td>{{ formatear_moneda(producto.precio_venta) }}</td>
-                        <td>{{ formatear_moneda(producto.costo_unitario) }}</td>
-                        <td>
-                            {% if producto.stock <= 5 %}
-                            <span class="badge badge-stock-bajo">{{ producto.stock }}</span>
-                            {% else %}
-                            <span class="badge badge-stock-ok">{{ producto.stock }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{{ url_for('productos.editar', id_producto=producto.id_producto) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form method="POST" action="{{ url_for('productos.eliminar', id_producto=producto.id_producto) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este producto?')">
-                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <a
+            href="{{ url_for('productos.nuevo') }}"
+            class="dashboard-sale-btn"
+        >
+            <i class="bi bi-plus-lg"></i>
+            Nuevo producto
+        </a>
     </div>
-</div>
 
-<div class="mobile-card-list">
-    {% for producto in productos %}
-    <div class="mobile-data-card">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-            <strong>{{ producto.nombre }}</strong>
-            {% if producto.stock <= 5 %}
-            <span class="badge badge-stock-bajo">Stock: {{ producto.stock }}</span>
-            {% else %}
-            <span class="badge badge-stock-ok">Stock: {{ producto.stock }}</span>
+
+    <!-- RESUMEN -->
+    <section class="products-summary">
+
+        <!-- PRODUCTOS -->
+        <div class="summary-card product-summary-card">
+
+            <div class="summary-icon">
+                <i class="bi bi-box-seam"></i>
+            </div>
+
+            <div class="summary-content">
+                <span>Productos registrados</span>
+
+                <strong>
+                    {{ total_productos }}
+                </strong>
+
+                <small>
+                    Productos en tu inventario
+                </small>
+            </div>
+
+        </div>
+
+
+        <!-- STOCK -->
+        <div class="summary-card product-summary-card product-summary-stock">
+
+            <div class="summary-icon">
+                <i class="bi bi-boxes"></i>
+            </div>
+
+            <div class="summary-content">
+                <span>Unidades en stock</span>
+
+                <strong>
+                    {{ stock_total }}
+                </strong>
+
+                <small>
+                    Cantidad disponible actualmente
+                </small>
+            </div>
+
+        </div>
+
+
+        <!-- INVERSIÓN -->
+        <div class="summary-card product-summary-card product-summary-investment">
+
+            <div class="summary-icon">
+                <i class="bi bi-piggy-bank"></i>
+            </div>
+
+            <div class="summary-content">
+                <span>Inversión actual</span>
+
+                <strong>
+                    {{ formatear_moneda(inversion_inventario) }}
+                </strong>
+
+                <small>
+                    Costo del inventario disponible
+                </small>
+            </div>
+
+        </div>
+
+
+        <!-- STOCK BAJO -->
+        <div class="summary-card product-summary-card product-summary-low">
+
+            <div class="summary-icon">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+
+            <div class="summary-content">
+                <span>Stock bajo</span>
+
+                <strong>
+                    {{ productos_stock_bajo }}
+                </strong>
+
+                <small>
+                    Productos que necesitan atención
+                </small>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- BUSCADOR -->
+    <form method="GET" class="products-search">
+
+        <div class="products-search-input">
+
+            <i class="bi bi-search"></i>
+
+            <input
+                type="text"
+                name="q"
+                value="{{ busqueda }}"
+                placeholder="Buscar producto..."
+                autocomplete="off"
+            >
+
+            {% if busqueda %}
+
+            <a
+                href="{{ url_for('productos.index') }}"
+                class="products-search-clear"
+                title="Limpiar búsqueda"
+            >
+                <i class="bi bi-x-lg"></i>
+            </a>
+
             {% endif %}
+
         </div>
-        <div class="row-item"><strong>Precio</strong><span>{{ formatear_moneda(producto.precio_venta) }}</span></div>
-        <div class="row-item"><strong>Costo</strong><span>{{ formatear_moneda(producto.costo_unitario) }}</span></div>
-        <div class="d-flex gap-2 mt-2">
-            <a href="{{ url_for('productos.editar', id_producto=producto.id_producto) }}" class="btn btn-sm btn-outline-primary flex-fill">Editar</a>
-            <form method="POST" action="{{ url_for('productos.eliminar', id_producto=producto.id_producto) }}" class="flex-fill" onsubmit="return confirm('¿Eliminar?')">
-                <button type="submit" class="btn btn-sm btn-outline-danger w-100">Eliminar</button>
-            </form>
+
+
+        {% if busqueda %}
+
+        <span class="products-search-count">
+
+            {{ productos|length }}
+
+            resultado{% if productos|length != 1 %}s{% endif %}
+
+        </span>
+
+        {% endif %}
+
+    </form>
+
+
+    <!-- LISTADO -->
+    <article class="dashboard-panel products-panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <span class="panel-icon">
+                    <i class="bi bi-box-seam"></i>
+                </span>
+
+                <div>
+
+                    <h2>INVENTARIO DE PRODUCTOS</h2>
+
+                    <p>
+
+                        {% if busqueda %}
+
+                            Resultados para “{{ busqueda }}”
+
+                        {% else %}
+
+                            {{ productos|length }}
+                            producto{% if productos|length != 1 %}s{% endif %}
+                            registrados
+
+                        {% endif %}
+
+                    </p>
+
+                </div>
+
+            </div>
+
         </div>
-    </div>
-    {% endfor %}
+
+
+        {% if productos %}
+
+        <!-- =====================================================
+             ESCRITORIO
+             ===================================================== -->
+
+        <div class="desktop-table">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle products-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Producto</th>
+
+                            <th>Precio venta</th>
+
+                            <th>Costo</th>
+
+                            <th>Margen</th>
+
+                            <th>Stock</th>
+
+                            <th>Estado</th>
+
+                            <th class="text-end">
+                                Acciones
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for producto in productos %}
+
+                        <tr>
+
+                            <!-- PRODUCTO -->
+
+                            <td>
+
+                                <div class="product-name">
+
+                                    <span class="product-avatar">
+                                        <i class="bi bi-box"></i>
+                                    </span>
+
+                                    <strong>
+                                        {{ producto.nombre }}
+                                    </strong>
+
+                                </div>
+
+                            </td>
+
+
+                            <!-- PRECIO -->
+
+                            <td>
+
+                                <strong class="product-money">
+                                    {{ formatear_moneda(producto.precio_venta) }}
+                                </strong>
+
+                            </td>
+
+
+                            <!-- COSTO -->
+
+                            <td>
+
+                                <span class="product-cost">
+                                    {{ formatear_moneda(producto.costo_unitario) }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- MARGEN -->
+
+                            <td>
+
+                                {% set margen = producto.precio_venta - producto.costo_unitario %}
+
+                                <span
+                                    class="
+                                        product-margin
+                                        {% if margen < 0 %}
+                                            product-margin-negative
+                                        {% endif %}
+                                    "
+                                >
+                                    {{ formatear_moneda(margen) }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- STOCK -->
+
+                            <td>
+
+                                <span
+                                    class="
+                                        product-stock-value
+                                        {% if producto.stock <= 5 %}
+                                            product-stock-low
+                                        {% endif %}
+                                    "
+                                >
+                                    {{ producto.stock }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- ESTADO -->
+
+                            <td>
+
+                                {% if producto.stock <= 5 %}
+
+                                    <span class="product-status product-status-low">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        Stock bajo
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="product-status product-status-ok">
+                                        <i class="bi bi-check-circle"></i>
+                                        Disponible
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- ACCIONES -->
+
+                            <td>
+
+                                <div class="product-actions">
+
+                                    <a
+                                        href="{{ url_for('productos.editar', id_producto=producto.id_producto) }}"
+                                        class="btn btn-sm btn-outline-primary"
+                                        title="Editar producto"
+                                    >
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('productos.eliminar', id_producto=producto.id_producto) }}"
+                                        onsubmit="return confirm('¿Eliminar este producto?')"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-outline-danger"
+                                            title="Eliminar producto"
+                                        >
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             MÓVIL
+             ===================================================== -->
+
+        <div class="mobile-card-list products-mobile-list">
+
+            {% for producto in productos %}
+
+            {% set margen = producto.precio_venta - producto.costo_unitario %}
+
+            <div class="mobile-data-card product-card">
+
+                <div class="product-card-header">
+
+                    <div class="product-name">
+
+                        <span class="product-avatar">
+                            <i class="bi bi-box"></i>
+                        </span>
+
+                        <strong>
+                            {{ producto.nombre }}
+                        </strong>
+
+                    </div>
+
+
+                    {% if producto.stock <= 5 %}
+
+                        <span class="product-status product-status-low">
+                            <i class="bi bi-exclamation-circle"></i>
+                            Bajo
+                        </span>
+
+                    {% else %}
+
+                        <span class="product-status product-status-ok">
+                            <i class="bi bi-check-circle"></i>
+                            Disponible
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="product-card-stock">
+
+                    <span>
+                        Stock
+                    </span>
+
+                    <strong
+                        class="
+                            {% if producto.stock <= 5 %}
+                                product-stock-low
+                            {% endif %}
+                        "
+                    >
+                        {{ producto.stock }}
+                    </strong>
+
+                </div>
+
+
+                <div class="product-card-data">
+
+                    <div class="row-item">
+
+                        <strong>
+                            Precio de venta
+                        </strong>
+
+                        <span class="product-money">
+                            {{ formatear_moneda(producto.precio_venta) }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="row-item">
+
+                        <strong>
+                            Costo
+                        </strong>
+
+                        <span>
+                            {{ formatear_moneda(producto.costo_unitario) }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="row-item">
+
+                        <strong>
+                            Margen
+                        </strong>
+
+                        <span
+                            class="
+                                product-money
+                                {% if margen < 0 %}
+                                    product-margin-negative
+                                {% endif %}
+                            "
+                        >
+                            {{ formatear_moneda(margen) }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="product-actions product-mobile-actions">
+
+                    <a
+                        href="{{ url_for('productos.editar', id_producto=producto.id_producto) }}"
+                        class="btn btn-sm btn-outline-primary flex-fill"
+                    >
+                        <i class="bi bi-pencil"></i>
+                        Editar
+                    </a>
+
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('productos.eliminar', id_producto=producto.id_producto) }}"
+                        class="flex-fill"
+                        onsubmit="return confirm('¿Eliminar este producto?')"
+                    >
+
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-outline-danger w-100"
+                        >
+                            <i class="bi bi-trash"></i>
+                            Eliminar
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        {% else %}
+
+        <!-- SIN RESULTADOS -->
+
+        <div class="dashboard-empty products-empty">
+
+            <i class="bi bi-box-seam"></i>
+
+            {% if busqueda %}
+
+                <strong>
+                    No encontramos productos
+                </strong>
+
+                <span>
+                    No hay productos que coincidan con
+                    “{{ busqueda }}”.
+                </span>
+
+                <a
+                    href="{{ url_for('productos.index') }}"
+                    class="btn btn-outline-primary mt-2"
+                >
+                    Ver todos
+                </a>
+
+            {% else %}
+
+                <strong>
+                    Aún no tienes productos registrados
+                </strong>
+
+                <span>
+                    Agrega tu primer producto para comenzar
+                    a controlar tu inventario.
+                </span>
+
+                <a
+                    href="{{ url_for('productos.nuevo') }}"
+                    class="btn btn-primary mt-2"
+                >
+                    <i class="bi bi-plus-lg"></i>
+                    Agregar producto
+                </a>
+
+            {% endif %}
+
+        </div>
+
+        {% endif %}
+
+    </article>
+
 </div>
-{% else %}
-<div class="section-card">
-    <div class="empty-state">
-        <i class="bi bi-box-seam"></i>
-        <p>{% if busqueda %}No se encontraron productos.{% else %}Aún no tienes productos registrados.{% endif %}</p>
-        <a href="{{ url_for('productos.nuevo') }}" class="btn btn-primary">Agregar producto</a>
-    </div>
-</div>
-{% endif %}
 {% endblock %}

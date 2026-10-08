@@ -3,6 +3,7 @@ from flask_login import login_required
 
 from app.extensions import db
 from app.models import Producto
+from app.services import StatsService
 from app.utils import formatear_moneda
 
 productos_bp = Blueprint("productos", __name__, url_prefix="/productos")
@@ -12,14 +13,38 @@ productos_bp = Blueprint("productos", __name__, url_prefix="/productos")
 @login_required
 def index():
     busqueda = request.args.get("q", "").strip()
+
     query = Producto.query
+
     if busqueda:
-        query = query.filter(Producto.nombre.ilike(f"%{busqueda}%"))
+        query = query.filter(
+            Producto.nombre.ilike(f"%{busqueda}%")
+        )
+
     productos = query.order_by(Producto.nombre).all()
+
+    todos_los_productos = Producto.query.order_by(Producto.nombre).all()
+
+    resumen = StatsService.resumen_general()
+
+    stock_total = sum(
+        producto.stock for producto in todos_los_productos
+    )
+
+    valor_venta_potencial = sum(
+        producto.precio_venta * producto.stock
+        for producto in todos_los_productos
+    )
+
     return render_template(
         "productos/index.html",
         productos=productos,
         busqueda=busqueda,
+        total_productos=len(todos_los_productos),
+        stock_total=stock_total,
+        inversion_inventario=resumen.inversion_inventario,
+        productos_stock_bajo=resumen.productos_stock_bajo,
+        valor_venta_potencial=valor_venta_potencial,
         formatear_moneda=formatear_moneda,
     )
 
@@ -35,56 +60,126 @@ def nuevo():
                 costo_unitario=float(request.form["costo_unitario"]),
                 stock=int(request.form["stock"]),
             )
-            if producto.precio_venta < 0 or producto.costo_unitario < 0 or producto.stock < 0:
+
+            if not producto.nombre:
+                raise ValueError("El nombre es obligatorio.")
+
+            if (
+                producto.precio_venta < 0
+                or producto.costo_unitario < 0
+                or producto.stock < 0
+            ):
                 raise ValueError("Los valores no pueden ser negativos.")
+
             db.session.add(producto)
             db.session.commit()
-            flash("Producto registrado correctamente.", "success")
+
+            flash(
+                "Producto registrado correctamente.",
+                "success",
+            )
+
             return redirect(url_for("productos.index"))
+
         except (ValueError, KeyError) as exc:
-            flash(str(exc) if str(exc) else "Datos inválidos.", "danger")
+            flash(
+                str(exc) if str(exc) else "Datos inválidos.",
+                "danger",
+            )
 
-    return render_template("productos/form.html", producto=None, titulo="Nuevo producto")
+    return render_template(
+        "productos/form.html",
+        producto=None,
+        titulo="Nuevo producto",
+    )
 
 
-@productos_bp.route("/<int:id_producto>/editar", methods=["GET", "POST"])
+@productos_bp.route(
+    "/<int:id_producto>/editar",
+    methods=["GET", "POST"],
+)
 @login_required
 def editar(id_producto: int):
     producto = db.session.get(Producto, id_producto)
+
     if not producto:
         flash("Producto no encontrado.", "warning")
         return redirect(url_for("productos.index"))
 
     if request.method == "POST":
         try:
-            producto.nombre = request.form["nombre"].strip()
-            producto.precio_venta = float(request.form["precio_venta"])
-            producto.costo_unitario = float(request.form["costo_unitario"])
-            producto.stock = int(request.form["stock"])
-            if producto.precio_venta < 0 or producto.costo_unitario < 0 or producto.stock < 0:
-                raise ValueError("Los valores no pueden ser negativos.")
+            nombre = request.form["nombre"].strip()
+            precio_venta = float(request.form["precio_venta"])
+            costo_unitario = float(request.form["costo_unitario"])
+            stock = int(request.form["stock"])
+
+            if not nombre:
+                raise ValueError("El nombre es obligatorio.")
+
+            if (
+                precio_venta < 0
+                or costo_unitario < 0
+                or stock < 0
+            ):
+                raise ValueError(
+                    "Los valores no pueden ser negativos."
+                )
+
+            producto.nombre = nombre
+            producto.precio_venta = precio_venta
+            producto.costo_unitario = costo_unitario
+            producto.stock = stock
+
             db.session.commit()
-            flash("Producto actualizado.", "success")
+
+            flash(
+                "Producto actualizado.",
+                "success",
+            )
+
             return redirect(url_for("productos.index"))
+
         except (ValueError, KeyError) as exc:
-            flash(str(exc) if str(exc) else "Datos inválidos.", "danger")
+            flash(
+                str(exc) if str(exc) else "Datos inválidos.",
+                "danger",
+            )
 
-    return render_template("productos/form.html", producto=producto, titulo="Editar producto")
+    return render_template(
+        "productos/form.html",
+        producto=producto,
+        titulo="Editar producto",
+    )
 
 
-@productos_bp.route("/<int:id_producto>/eliminar", methods=["POST"])
+@productos_bp.route(
+    "/<int:id_producto>/eliminar",
+    methods=["POST"],
+)
 @login_required
 def eliminar(id_producto: int):
     producto = db.session.get(Producto, id_producto)
+
     if not producto:
-        flash("Producto no encontrado.", "warning")
+        flash(
+            "Producto no encontrado.",
+            "warning",
+        )
         return redirect(url_for("productos.index"))
 
     if producto.detalles.count() > 0:
-        flash("No se puede eliminar: el producto tiene ventas registradas.", "warning")
+        flash(
+            "No se puede eliminar: el producto tiene ventas registradas.",
+            "warning",
+        )
         return redirect(url_for("productos.index"))
 
     db.session.delete(producto)
     db.session.commit()
-    flash("Producto eliminado.", "info")
+
+    flash(
+        "Producto eliminado.",
+        "info",
+    )
+
     return redirect(url_for("productos.index"))
