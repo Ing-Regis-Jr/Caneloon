@@ -22,30 +22,41 @@ class VentaService:
     @staticmethod
     def obtener_o_crear_cliente(nombre: str) -> Cliente:
         nombre = nombre.strip()
+
         if not nombre:
             raise ValueError("El nombre del cliente no puede estar vacío.")
 
         cliente = Cliente.query.filter(
             func.lower(Cliente.nombre) == nombre.lower()
         ).first()
+
         if cliente:
             return cliente
 
         cliente = Cliente(nombre=nombre)
         db.session.add(cliente)
         db.session.flush()
+
         return cliente
 
     @staticmethod
-    def _normalizar_items(items: list[tuple[int, int]]) -> dict[int, int]:
+    def _normalizar_items(
+        items: list[tuple[int, int]],
+    ) -> dict[int, int]:
         """Une productos repetidos y valida cantidades."""
         agrupados: dict[int, int] = {}
+
         for id_producto, cantidad in items:
             if cantidad <= 0:
                 raise ValueError("La cantidad debe ser mayor a cero.")
-            agrupados[id_producto] = agrupados.get(id_producto, 0) + cantidad
+
+            agrupados[id_producto] = (
+                agrupados.get(id_producto, 0) + cantidad
+            )
+
         if not agrupados:
             raise ValueError("Agrega al menos un producto a la venta.")
+
         return agrupados
 
     @staticmethod
@@ -54,7 +65,7 @@ class VentaService:
         items: dict[int, int],
         productos_archivados_permitidos: set[int] | None = None,
     ) -> None:
-        """Crea los detalles y descuenta stock."""
+        """Crea los detalles de venta y descuenta el stock."""
         total = 0.0
 
         for id_producto, cantidad in items.items():
@@ -63,10 +74,14 @@ class VentaService:
             if not producto:
                 raise ValueError("Producto no encontrado.")
 
+            # Los productos archivados no se pueden agregar a ventas nuevas.
+            # Al editar, solo se permiten los archivados que ya estaban
+            # incluidos en la venta original.
             if (
-    not producto.activo
-    and id_producto not in (productos_archivados_permitidos or set())
-):
+                not producto.activo
+                and id_producto
+                not in (productos_archivados_permitidos or set())
+            ):
                 raise ValueError(
                     f"El producto {producto.nombre} está archivado "
                     "y no puede utilizarse en nuevas ventas."
@@ -88,7 +103,7 @@ class VentaService:
                     precio_unitario=producto.precio_venta,
                     subtotal=subtotal,
                     costo_total=costo_total,
-                    ganancia=subtotal
+                    ganancia=subtotal - costo_total,
                 )
             )
 
@@ -165,11 +180,13 @@ class VentaService:
     @staticmethod
     def eliminar_venta(id_venta: int) -> None:
         venta = db.session.get(Venta, id_venta)
+
         if not venta or not venta.detalles:
             raise ValueError("Venta no encontrada.")
 
         for detalle in venta.detalles:
             detalle.producto.stock += detalle.cantidad
+
         db.session.delete(venta)
         db.session.commit()
 
@@ -177,23 +194,42 @@ class VentaService:
 class StatsService:
     @staticmethod
     def resumen_general() -> ResumenFinanciero:
+        # Las estadísticas económicas incluyen todas las ventas históricas,
+        # incluso las de productos que ahora están archivados.
         ventas_totales = db.session.query(
             func.coalesce(func.sum(Venta.total), 0.0)
         ).scalar()
+
         costo_total = db.session.query(
             func.coalesce(func.sum(DetalleVenta.costo_total), 0.0)
         ).scalar()
+
         ganancia_neta = db.session.query(
             func.coalesce(func.sum(DetalleVenta.ganancia), 0.0)
         ).scalar()
 
-        productos = Producto.query.all()
-        inversion_inventario = sum(p.costo_unitario * p.stock for p in productos)
+        # El inventario y el stock bajo consideran solo productos activos.
+        productos = Producto.query.filter(
+            Producto.activo.is_(True)
+        ).all()
+
+        inversion_inventario = sum(
+            producto.costo_unitario * producto.stock
+            for producto in productos
+        )
+
         umbral = current_app.config["STOCK_BAJO_UMBRAL"]
-        productos_stock_bajo = sum(1 for p in productos if p.stock <= umbral)
+
+        productos_stock_bajo = sum(
+            1
+            for producto in productos
+            if producto.stock <= umbral
+        )
 
         porcentaje = (
-            (ganancia_neta / ventas_totales * 100) if ventas_totales > 0 else 0.0
+            ganancia_neta / ventas_totales * 100
+            if ventas_totales > 0
+            else 0.0
         )
 
         return ResumenFinanciero(
@@ -207,26 +243,39 @@ class StatsService:
         )
 
     @staticmethod
-    def productos_mas_vendidos(limite: int = 5) -> list[tuple[str, int, float]]:
+    def productos_mas_vendidos(
+        limite: int = 5,
+    ) -> list[tuple[str, int, float]]:
+        # Conservamos los productos archivados en el ranking histórico.
         resultados = (
             db.session.query(
                 Producto.nombre,
                 func.sum(DetalleVenta.cantidad).label("total_vendido"),
                 func.sum(DetalleVenta.subtotal).label("ingresos"),
             )
-            .join(DetalleVenta, DetalleVenta.id_producto == Producto.id_producto)
+            .join(
+                DetalleVenta,
+                DetalleVenta.id_producto == Producto.id_producto,
+            )
             .group_by(Producto.id_producto)
             .order_by(func.sum(DetalleVenta.cantidad).desc())
             .limit(limite)
             .all()
         )
+
         return [
-            (r.nombre, int(r.total_vendido or 0), float(r.ingresos or 0))
-            for r in resultados
+            (
+                resultado.nombre,
+                int(resultado.total_vendido or 0),
+                float(resultado.ingresos or 0),
+            )
+            for resultado in resultados
         ]
 
     @staticmethod
-    def clientes_top(limite: int = 5) -> list[tuple[str, int, float]]:
+    def clientes_top(
+        limite: int = 5,
+    ) -> list[tuple[str, int, float]]:
         resultados = (
             db.session.query(
                 Cliente.nombre,
@@ -239,9 +288,14 @@ class StatsService:
             .limit(limite)
             .all()
         )
+
         return [
-            (r.nombre, int(r.total_compras or 0), float(r.total_gastado or 0))
-            for r in resultados
+            (
+                resultado.nombre,
+                int(resultado.total_compras or 0),
+                float(resultado.total_gastado or 0),
+            )
+            for resultado in resultados
         ]
 
     @staticmethod
@@ -251,43 +305,66 @@ class StatsService:
                 Cliente.id_cliente,
                 Cliente.nombre,
                 func.count(Venta.id_venta).label("compras"),
-                func.coalesce(func.sum(Venta.total), 0.0).label("gastado"),
+                func.coalesce(
+                    func.sum(Venta.total), 0.0
+                ).label("gastado"),
                 func.max(Venta.fecha).label("ultima_compra"),
             )
             .outerjoin(Venta, Venta.id_cliente == Cliente.id_cliente)
             .group_by(Cliente.id_cliente)
             .order_by(Cliente.nombre)
         )
+
         if busqueda:
-            query = query.filter(Cliente.nombre.ilike(f"%{busqueda}%"))
+            query = query.filter(
+                Cliente.nombre.ilike(f"%{busqueda}%")
+            )
 
         return [
             {
-                "id_cliente": r.id_cliente,
-                "nombre": r.nombre,
-                "compras": int(r.compras),
-                "gastado": float(r.gastado),
-                "ultima_compra": r.ultima_compra,
+                "id_cliente": resultado.id_cliente,
+                "nombre": resultado.nombre,
+                "compras": int(resultado.compras),
+                "gastado": float(resultado.gastado),
+                "ultima_compra": resultado.ultima_compra,
             }
-            for r in query.all()
+            for resultado in query.all()
         ]
 
     @staticmethod
     def inversion_por_producto() -> list[dict]:
-        productos = Producto.query.order_by(Producto.nombre).all()
+        # La tabla de inversión muestra solo el inventario activo.
+        productos = (
+            Producto.query
+            .filter(Producto.activo.is_(True))
+            .order_by(Producto.nombre)
+            .all()
+        )
+
         return [
             {
-                "nombre": p.nombre,
-                "stock": p.stock,
-                "costo_unitario": p.costo_unitario,
-                "inversion": p.costo_unitario * p.stock,
-                "valor_venta_potencial": p.precio_venta * p.stock,
-                "margen_unitario": p.precio_venta - p.costo_unitario,
+                "nombre": producto.nombre,
+                "stock": producto.stock,
+                "costo_unitario": producto.costo_unitario,
+                "inversion": (
+                    producto.costo_unitario * producto.stock
+                ),
+                "valor_venta_potencial": (
+                    producto.precio_venta * producto.stock
+                ),
+                "margen_unitario": (
+                    producto.precio_venta - producto.costo_unitario
+                ),
                 "margen_porcentaje": (
-                    (p.precio_venta - p.costo_unitario) / p.precio_venta * 100
-                    if p.precio_venta > 0
+                    (
+                        producto.precio_venta
+                        - producto.costo_unitario
+                    )
+                    / producto.precio_venta
+                    * 100
+                    if producto.precio_venta > 0
                     else 0.0
                 ),
             }
-            for p in productos
+            for producto in productos
         ]
