@@ -126,7 +126,7 @@ body {
   flex: 1;
   padding: 0 0.15rem;
   min-width: 0;
-  overflow: hidden;
+  min-height: 0;
 }
 
 .sidebar-section {
@@ -280,7 +280,7 @@ body {
   justify-content: space-around;
   align-items: center;
   z-index: 100;
-  padding: 0 0.5rem;
+  padding: 0 0.15rem;
   box-shadow: 0 -4px 20px rgba(230, 126, 34, 0.08);
 }
 
@@ -291,16 +291,17 @@ body {
   gap: 0.15rem;
   color: var(--color-muted);
   text-decoration: none;
-  font-size: 0.68rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  padding: 0.5rem;
+  padding: 0.5rem 0.1rem;
   flex: 1;
   text-align: center;
   transition: color 0.2s ease;
+  min-width: 0;
 }
 
 .bottom-nav-item i {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
 }
 
 .bottom-nav-item.active {

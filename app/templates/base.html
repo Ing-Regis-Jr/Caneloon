@@ -26,7 +26,7 @@
             <nav class="sidebar-nav">
 
                 <div class="sidebar-section">
-                    <span class="sidebar-section-title">PRINCIPAL</span>
+                    <span class="sidebar-section-title">VISTA GENERAL</span>
 
                     <a href="{{ url_for('dashboard.index') }}"
                         class="nav-link-app {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
@@ -36,7 +36,7 @@
                 </div>
 
                 <div class="sidebar-section">
-                    <span class="sidebar-section-title">GESTIÓN</span>
+                    <span class="sidebar-section-title">GESTIÓN DE DATOS</span>
 
                     <a href="{{ url_for('ventas.registrar') }}"
                         class="nav-link-app {% if request.endpoint == 'ventas.registrar' %}active{% endif %}">
@@ -70,8 +70,6 @@
                 </div>
 
                 <div class="sidebar-section sidebar-system">
-                    <span class="sidebar-section-title">SISTEMA</span>
-
                     <a href="{{ url_for('auth.logout') }}" class="nav-link-app logout-link">
                         <i class="bi bi-box-arrow-right"></i>
                         <span>Cerrar sesión</span>
@@ -95,9 +93,6 @@
                     <span>{{ app_name }}</span>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{{ url_for('clientes.index') }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-people"></i>
-                    </a>
                     <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-secondary">
                         <i class="bi bi-box-arrow-right"></i>
                     </a>
@@ -120,26 +115,34 @@
             </div>
         </main>
 
-        <nav class="bottom-nav d-lg-none">
+                <nav class="bottom-nav d-lg-none">
             <a href="{{ url_for('dashboard.index') }}"
                 class="bottom-nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
                 <i class="bi bi-grid-1x2"></i>
                 <span>INICIO</span>
             </a>
-            <a href="{{ url_for('productos.index') }}"
-                class="bottom-nav-item {% if request.blueprint == 'productos' %}active{% endif %}">
-                <i class="bi bi-box-seam"></i>
-                <span>PRODUCTOS</span>
-            </a>
+            
             <a href="{{ url_for('ventas.registrar') }}"
-                class="bottom-nav-item bottom-nav-fab {% if request.endpoint == 'ventas.registrar' %}active{% endif %}">
-                <i class="bi bi-plus-lg"></i>
+                class="bottom-nav-item {% if request.endpoint == 'ventas.registrar' %}active{% endif %}">
+                <i class="bi bi-cart"></i>
                 <span>REGISTRAR VENTAS</span>
             </a>
+
             <a href="{{ url_for('ventas.index') }}"
                 class="bottom-nav-item {% if request.blueprint == 'ventas' and request.endpoint != 'ventas.registrar' %}active{% endif %}">
                 <i class="bi bi-receipt"></i>
                 <span>HISTORIAL</span>
+            </a>
+            
+            <a href="{{ url_for('clientes.index') }}"
+                class="bottom-nav-item {% if request.blueprint == 'clientes' %}active{% endif %}">
+                <i class="bi bi-people"></i>
+                <span>CLIENTES</span>
+            </a>
+            <a href="{{ url_for('productos.index') }}"
+                class="bottom-nav-item {% if request.blueprint == 'productos' %}active{% endif %}">
+                <i class="bi bi-box-seam"></i>
+                <span>PRODUCTOS</span>
             </a>
             <a href="{{ url_for('inversion.index') }}"
                 class="bottom-nav-item {% if request.blueprint == 'inversion' %}active{% endif %}">
