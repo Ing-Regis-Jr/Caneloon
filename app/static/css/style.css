@@ -1740,3 +1740,39 @@ body {
   min-height: 0;
   max-height: min(560px, 70vh);
 }
+/* ========================================
+   VENTAS CON VARIOS PRODUCTOS
+   ======================================== */
+.sale-items { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.75rem; }
+
+.sale-item-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 46px;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* La cantidad ocupa su columna, sin desbordarse */
+.sale-item-row .quantity-input { width: 100%; }
+
+/* Botón quitar producto */
+.item-quitar {
+  width: 46px;
+  align-self: stretch;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Con un solo producto no se puede quitar: se oculta */
+.item-quitar:disabled { visibility: hidden; }
+
+.sale-add-item { font-weight: 700; }
+.summary-items { list-style: none; margin: 0 0 0.75rem; padding: 0; }
+.summary-empty { color: var(--color-muted); font-size: 0.9rem; }
+
+@media (max-width: 575px) {
+  .sale-item-row { grid-template-columns: minmax(0, 1fr) 46px; }
+  .sale-item-row .sale-input-wrapper { grid-column: 1 / -1; }
+}

@@ -1,0 +1,114 @@
+{# Filas de productos de una venta. Variables: productos, items_iniciales (opcional) #}
+<div class="sale-field">
+    <label class="form-label">Productos</label>
+
+    <div id="items-container" class="sale-items" data-items='{{ (items_iniciales or [])|tojson }}'></div>
+
+    <button type="button" id="btn-agregar-item" class="btn btn-outline-primary sale-add-item">
+        <i class="bi bi-plus-lg"></i> Agregar otro producto
+    </button>
+</div>
+
+<template id="item-row-template">
+    <div class="sale-item-row">
+        <div class="sale-input-wrapper">
+            <i class="bi bi-box-seam"></i>
+            <select class="form-select item-producto" name="id_producto" required>
+                <option value="">Selecciona un producto</option>
+                {% for producto in productos %}
+                {% set stock = producto.stock_disponible if producto is mapping else producto.stock %}
+                {% set pid = producto.id_producto %}
+                {% set pnombre = producto.nombre %}
+                {% set pprecio = producto.precio_venta %}
+                <option value="{{ pid }}" data-nombre="{{ pnombre }}" data-precio="{{ pprecio }}" data-stock="{{ stock }}">
+                    {{ pnombre }} — {{ formatear_moneda(pprecio) }} (Stock: {{ stock }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="quantity-input">
+            <i class="bi bi-hash"></i>
+            <input type="number" class="form-control item-cantidad" name="cantidad" min="1" value="1" required>
+        </div>
+        <button type="button" class="btn btn-outline-danger item-quitar" title="Quitar producto">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+</template>
+
+<script>
+    
+    document.addEventListener('DOMContentLoaded', function () {
+        const contenedor = document.getElementById('items-container');
+        const plantilla = document.getElementById('item-row-template');
+        const btnAgregar = document.getElementById('btn-agregar-item');
+        const listaResumen = document.getElementById('summary-items');
+        const totalEl = document.getElementById('preview-total');
+        const avisoEl = document.getElementById('preview-stock');
+
+        const fmt = n => 'Bs. ' + n.toLocaleString('es-BO', {
+            minimumFractionDigits: 2, maximumFractionDigits: 2
+        });
+
+        function agregarFila(id, cantidad) {
+            const fila = plantilla.content.firstElementChild.cloneNode(true);
+            if (id) fila.querySelector('.item-producto').value = id;
+            if (cantidad) fila.querySelector('.item-cantidad').value = cantidad;
+            contenedor.appendChild(fila);
+            actualizar();
+        }
+
+        function actualizar() {
+            const filas = contenedor.querySelectorAll('.sale-item-row');
+            const porProducto = {};
+            let total = 0;
+            let html = '';
+
+            filas.forEach(fila => {
+                const opt = fila.querySelector('.item-producto').selectedOptions[0];
+                const cant = Math.max(1, parseInt(fila.querySelector('.item-cantidad').value) || 1);
+                fila.querySelector('.item-quitar').disabled = filas.length === 1;
+                if (!opt || !opt.value) return;
+
+                const precio = parseFloat(opt.dataset.precio) || 0;
+                const stock = parseInt(opt.dataset.stock) || 0;
+                porProducto[opt.value] = porProducto[opt.value] || {nombre: opt.dataset.nombre, stock: stock, cant: 0};
+                porProducto[opt.value].cant += cant;
+                total += precio * cant;
+
+                const li = document.createElement('li');
+                li.className = 'summary-row';
+                const nombre = document.createElement('span');
+                nombre.textContent = opt.dataset.nombre + ' × ' + cant;
+                const sub = document.createElement('strong');
+                sub.textContent = fmt(precio * cant);
+                li.append(nombre, sub);
+                html += li.outerHTML;
+            });
+
+            listaResumen.innerHTML = html || '<li class="summary-empty">Selecciona un producto</li>';
+            totalEl.textContent = fmt(total);
+
+            const excedidos = Object.values(porProducto).filter(p => p.cant > p.stock);
+            avisoEl.textContent = excedidos.length
+                ? 'Stock insuficiente: ' + excedidos.map(p => p.nombre + ' (disp. ' + p.stock + ')').join(', ')
+                : '';
+            avisoEl.classList.toggle('text-danger', excedidos.length > 0);
+        }
+
+        contenedor.addEventListener('input', actualizar);
+        contenedor.addEventListener('change', actualizar);
+        contenedor.addEventListener('click', e => {
+            const btn = e.target.closest('.item-quitar');
+            if (btn && contenedor.children.length > 1) {
+                btn.closest('.sale-item-row').remove();
+                actualizar();
+            }
+        });
+        btnAgregar.addEventListener('click', () => agregarFila());
+
+        const iniciales = JSON.parse(contenedor.dataset.items || '[]');
+        if (iniciales.length) iniciales.forEach(i => agregarFila(i.id, i.cantidad));
+        else agregarFila();
+    });
+</script>

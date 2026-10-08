@@ -63,7 +63,6 @@
             {% if historial %}
             <div class="history-list">
                 {% for venta in historial %}
-                {% set detalle = venta.detalles[0] %}
                 <div class="history-item">
 
                     <div class="history-main">
@@ -71,7 +70,9 @@
                             <i class="bi bi-receipt"></i>
                         </div>
                         <div class="history-info">
-                            <strong>{{ detalle.producto.nombre }} × {{ detalle.cantidad }}</strong>
+                            <strong>
+                                {% for d in venta.detalles %}{{ d.producto.nombre }} × {{ d.cantidad }}{% if not loop.last %}, {% endif %}{% endfor %}
+                            </strong>
                             <span>
                                 {{ venta.cliente.nombre if venta.cliente else 'Consumidor general' }}
                                 · {{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}

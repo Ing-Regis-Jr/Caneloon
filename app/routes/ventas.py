@@ -12,27 +12,32 @@ ventas_bp = Blueprint("ventas", __name__, url_prefix="/ventas")
 
 
 def _productos_para_edicion(venta: Venta) -> list[dict]:
-    detalle = venta.detalles[0]
-    producto_actual_id = detalle.id_producto
-    cantidad_actual = detalle.cantidad
+    en_venta = {d.id_producto: d.cantidad for d in venta.detalles}
     productos = []
 
     for producto in Producto.query.order_by(Producto.nombre).all():
-        if producto.stock > 0 or producto.id_producto == producto_actual_id:
-            stock_disponible = producto.stock + (
-                cantidad_actual if producto.id_producto == producto_actual_id else 0
-            )
+        if producto.stock > 0 or producto.id_producto in en_venta:
             productos.append(
                 {
                     "id_producto": producto.id_producto,
                     "nombre": producto.nombre,
                     "precio_venta": producto.precio_venta,
-                    "stock_disponible": stock_disponible,
+                    "stock_disponible": producto.stock + en_venta.get(producto.id_producto, 0),
                 }
             )
 
     return productos
 
+
+def _leer_items() -> list[tuple[int, int]]:
+    ids = request.form.getlist("id_producto")
+    cantidades = request.form.getlist("cantidad")
+    items = []
+    for id_producto, cantidad in zip(ids, cantidades):
+        if not id_producto:
+            continue
+        items.append((int(id_producto), int(cantidad)))
+    return items
 
 def _resolver_id_cliente() -> int | None:
     id_cliente = request.form.get("id_cliente") or None
@@ -114,8 +119,7 @@ def registrar():
     if request.method == "POST":
         try:
             VentaService.registrar_venta(
-                id_producto=int(request.form["id_producto"]),
-                cantidad=int(request.form["cantidad"]),
+                items=_leer_items(),
                 id_cliente=_resolver_id_cliente(),
             )
             flash("Venta registrada correctamente.", "success")
@@ -139,7 +143,7 @@ def editar(id_venta: int):
         flash("Venta no encontrada.", "warning")
         return redirect(url_for("ventas.index"))
 
-    detalle = venta.detalles[0]
+    
     clientes = Cliente.query.order_by(Cliente.nombre).all()
     productos = _productos_para_edicion(venta)
 
@@ -147,8 +151,7 @@ def editar(id_venta: int):
         try:
             VentaService.actualizar_venta(
                 id_venta=id_venta,
-                id_producto=int(request.form["id_producto"]),
-                cantidad=int(request.form["cantidad"]),
+                items=_leer_items(),
                 id_cliente=_resolver_id_cliente(),
             )
             flash("Venta actualizada correctamente.", "success")
@@ -159,7 +162,8 @@ def editar(id_venta: int):
     return render_template(
         "ventas/editar.html",
         venta=venta,
-        detalle=detalle,
+        items_iniciales=[
+            {"id": d.id_producto, "cantidad": d.cantidad} for d in venta.detalles],
         productos=productos,
         clientes=clientes,
         formatear_moneda=formatear_moneda,

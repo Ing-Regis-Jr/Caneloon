@@ -35,88 +35,81 @@ class VentaService:
         db.session.add(cliente)
         db.session.flush()
         return cliente
+    @staticmethod
+    def _normalizar_items(items: list[tuple[int, int]]) -> dict[int, int]:
+        """Une productos repetidos y valida cantidades."""
+        agrupados: dict[int, int] = {}
+        for id_producto, cantidad in items:
+            if cantidad <= 0:
+                raise ValueError("La cantidad debe ser mayor a cero.")
+            agrupados[id_producto] = agrupados.get(id_producto, 0) + cantidad
+        if not agrupados:
+            raise ValueError("Agrega al menos un producto a la venta.")
+        return agrupados
 
     @staticmethod
-    def registrar_venta(id_producto: int, cantidad: int, id_cliente: int | None) -> Venta:
-        producto = db.session.get(Producto, id_producto)
-        if not producto:
-            raise ValueError("Producto no encontrado.")
-
-        if cantidad <= 0:
-            raise ValueError("La cantidad debe ser mayor a cero.")
-
-        if producto.stock < cantidad:
-            raise ValueError(
-                f"Stock insuficiente. Disponible: {producto.stock}, solicitado: {cantidad}."
+    def _aplicar_items(venta: Venta, items: dict[int, int]) -> None:
+        """Crea los detalles y descuenta stock. Asume stock ya restaurado."""
+        total = 0.0
+        for id_producto, cantidad in items.items():
+            producto = db.session.get(Producto, id_producto)
+            if not producto:
+                raise ValueError("Producto no encontrado.")
+            if producto.stock < cantidad:
+                raise ValueError(
+                    f"Stock insuficiente de {producto.nombre}. "
+                    f"Disponible: {producto.stock}, solicitado: {cantidad}."
+                )
+            subtotal = producto.precio_venta * cantidad
+            costo_total = producto.costo_unitario * cantidad
+            venta.detalles.append(
+                DetalleVenta(
+                    producto=producto,
+                    cantidad=cantidad,
+                    precio_unitario=producto.precio_venta,
+                    subtotal=subtotal,
+                    costo_total=costo_total,
+                    ganancia=subtotal - costo_total,
+                )
             )
+            producto.stock -= cantidad
+            total += subtotal
+        venta.total = total
 
-        subtotal = producto.precio_venta * cantidad
-        costo_total = producto.costo_unitario * cantidad
-        ganancia = subtotal - costo_total
-
-        venta = Venta(id_cliente=id_cliente, total=subtotal)
-        detalle = DetalleVenta(
-            producto=producto,
-            cantidad=cantidad,
-            precio_unitario=producto.precio_venta,
-            subtotal=subtotal,
-            costo_total=costo_total,
-            ganancia=ganancia,
-        )
-        venta.detalles.append(detalle)
-
-        producto.stock -= cantidad
-
-        db.session.add(venta)
-        db.session.commit()
+    @staticmethod
+    def registrar_venta(items: list[tuple[int, int]], id_cliente: int | None) -> Venta:
+        agrupados = VentaService._normalizar_items(items)
+        venta = Venta(id_cliente=id_cliente, total=0.0)
+        try:
+            VentaService._aplicar_items(venta, agrupados)
+            db.session.add(venta)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
         return venta
 
     @staticmethod
     def actualizar_venta(
-        id_venta: int, id_producto: int, cantidad: int, id_cliente: int | None
+        id_venta: int, items: list[tuple[int, int]], id_cliente: int | None
     ) -> Venta:
         venta = db.session.get(Venta, id_venta)
         if not venta or not venta.detalles:
             raise ValueError("Venta no encontrada.")
 
-        detalle = venta.detalles[0]
-        producto_anterior = detalle.producto
-        cantidad_anterior = detalle.cantidad
-        producto_nuevo = db.session.get(Producto, id_producto)
-        if not producto_nuevo:
-            raise ValueError("Producto no encontrado.")
+        agrupados = VentaService._normalizar_items(items)
+        try:
+            for detalle in list(venta.detalles):
+                detalle.producto.stock += detalle.cantidad
+            venta.detalles.clear()
+            db.session.flush()
 
-        if cantidad <= 0:
-            raise ValueError("La cantidad debe ser mayor a cero.")
-
-        if producto_nuevo.id_producto == producto_anterior.id_producto:
-            stock_disponible = producto_nuevo.stock + cantidad_anterior
-        else:
-            stock_disponible = producto_nuevo.stock
-
-        if stock_disponible < cantidad:
-            raise ValueError(
-                f"Stock insuficiente. Disponible: {stock_disponible}, solicitado: {cantidad}."
-            )
-
-        producto_anterior.stock += cantidad_anterior
-        producto_nuevo.stock -= cantidad
-
-        subtotal = producto_nuevo.precio_venta * cantidad
-        costo_total = producto_nuevo.costo_unitario * cantidad
-        ganancia = subtotal - costo_total
-
-        detalle.id_producto = producto_nuevo.id_producto
-        detalle.cantidad = cantidad
-        detalle.precio_unitario = producto_nuevo.precio_venta
-        detalle.subtotal = subtotal
-        detalle.costo_total = costo_total
-        detalle.ganancia = ganancia
-
-        venta.id_cliente = id_cliente
-        venta.total = subtotal
-
-        db.session.commit()
+            venta.id_cliente = id_cliente
+            VentaService._aplicar_items(venta, agrupados)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
         return venta
 
     @staticmethod
@@ -125,8 +118,8 @@ class VentaService:
         if not venta or not venta.detalles:
             raise ValueError("Venta no encontrada.")
 
-        detalle = venta.detalles[0]
-        detalle.producto.stock += detalle.cantidad
+        for detalle in venta.detalles:
+            detalle.producto.stock += detalle.cantidad
         db.session.delete(venta)
         db.session.commit()
 
@@ -188,6 +181,34 @@ class StatsService:
         return [(r.nombre, int(r.total_compras or 0), float(r.total_gastado or 0)) for r in resultados]
 
     @staticmethod
+    def clientes_resumen(busqueda: str = "") -> list[dict]:
+        query = (
+            db.session.query(
+                Cliente.id_cliente,
+                Cliente.nombre,
+                func.count(Venta.id_venta).label("compras"),
+                func.coalesce(func.sum(Venta.total), 0.0).label("gastado"),
+                func.max(Venta.fecha).label("ultima_compra"),
+            )
+            .outerjoin(Venta, Venta.id_cliente == Cliente.id_cliente)
+            .group_by(Cliente.id_cliente)
+            .order_by(Cliente.nombre)
+        )
+        if busqueda:
+            query = query.filter(Cliente.nombre.ilike(f"%{busqueda}%"))
+
+        return [
+            {
+                "id_cliente": r.id_cliente,
+                "nombre": r.nombre,
+                "compras": int(r.compras),
+                "gastado": float(r.gastado),
+                "ultima_compra": r.ultima_compra,
+            }
+            for r in query.all()
+        ]
+
+    @staticmethod
     def inversion_por_producto() -> list[dict]:
         productos = Producto.query.order_by(Producto.nombre).all()
         return [
@@ -198,6 +219,11 @@ class StatsService:
                 "inversion": p.costo_unitario * p.stock,
                 "valor_venta_potencial": p.precio_venta * p.stock,
                 "margen_unitario": p.precio_venta - p.costo_unitario,
+                "margen_porcentaje": (
+                    (p.precio_venta - p.costo_unitario) / p.precio_venta * 100
+                    if p.precio_venta > 0
+                    else 0.0
+                ),
             }
             for p in productos
         ]
